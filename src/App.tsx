@@ -11,6 +11,7 @@ import { FAQSection } from './components/faq/FAQSection';
 import { CommunityWall } from './components/community/CommunityWall';
 import { SavedDreamsView } from './components/saved/SavedDreamsView';
 import type { DreamSubmission, DreamAnalysisResult } from './types/dream';
+import { DreamAnalysisApiService } from './services/api/dreamAnalysisApi';
 import { DreamAnalysisEngine } from './services/dreamAnalysisEngine';
 import { StorageService } from './services/storageService';
 
@@ -28,19 +29,31 @@ export const App: React.FC = () => {
     setSavedCount(saved.length);
   }, [currentView, activeAnalysis]);
 
-  // Handle dream submission
-  const handleDreamSubmit = (submission: DreamSubmission) => {
+  // Handle dream submission via API
+  const handleDreamSubmit = async (submission: DreamSubmission) => {
     setIsAnalyzing(true);
     setActiveSubmission(submission);
 
-    // Smooth synthesis transition (600ms) for high-end feel
-    setTimeout(() => {
-      const result = DreamAnalysisEngine.analyze(submission);
-      setActiveAnalysis(result);
+    try {
+      const startTime = Date.now();
+      const result = await DreamAnalysisApiService.analyzeDream(submission);
+      const elapsed = Date.now() - startTime;
+      const remainingDelay = Math.max(0, 650 - elapsed);
+
+      setTimeout(() => {
+        setActiveAnalysis(result as unknown as DreamAnalysisResult);
+        setIsAnalyzing(false);
+        setCurrentView('analysis');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, remainingDelay);
+    } catch {
+      // Fallback
+      const fallbackResult = DreamAnalysisEngine.analyze(submission);
+      setActiveAnalysis(fallbackResult);
       setIsAnalyzing(false);
       setCurrentView('analysis');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 650);
+    }
   };
 
   const handleNavigate = (view: AppView) => {

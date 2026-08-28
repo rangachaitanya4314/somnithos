@@ -141,14 +141,16 @@ export class DreamArtGenerator {
     if (text.includes('underwater') || text.includes('submerged') || text.includes('ocean') || text.includes('sea')) {
       elements.push('Underwater Realm');
     }
-    if (features.detectedSymbols.includes('flying')) elements.push('Weightless Flight');
-    if (features.detectedSymbols.includes('falling')) elements.push('Abyssal Descent');
-    if (features.detectedSymbols.includes('snake')) elements.push('Luminous Serpent');
-    if (features.detectedSymbols.includes('fire')) elements.push('Primal Flame');
-    if (features.detectedSymbols.includes('bridge')) elements.push('Mist-Covered Bridge');
+    const symbols = (features as any)?.detectedSymbols || (features as any)?.dominantMotifs || [];
+    if (symbols.includes('flying')) elements.push('Weightless Flight');
+    if (symbols.includes('falling')) elements.push('Abyssal Descent');
+    if (symbols.includes('snake')) elements.push('Luminous Serpent');
+    if (symbols.includes('fire')) elements.push('Primal Flame');
+    if (symbols.includes('bridge')) elements.push('Mist-Covered Bridge');
 
     // Add unique extracted colors
-    features.detectedColors.forEach(c => {
+    const colors = features?.detectedColors || [];
+    colors.forEach(c => {
       elements.push(`${c.charAt(0).toUpperCase() + c.slice(1)} Palette`);
     });
 

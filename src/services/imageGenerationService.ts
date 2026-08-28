@@ -1,14 +1,18 @@
 import type { DreamSubmission, ExtractedDreamFeatures } from '../types/dream';
+import type { ArtworkSpecification } from '../domain/artwork/ArtworkSpecification';
+import type { ArtworkResult } from '../domain/artwork/ArtworkResult';
+import { createArtworkSpecification } from '../domain/artwork/ArtworkSpecification';
 import { DreamArtGenerator } from './dreamArtGenerator';
 
-export type ImageProviderType = 'procedural_canvas' | 'generative_ai_api';
+export type ImageProviderType = 'real_ai' | 'mock_ai' | 'procedural_canvas';
 
 export interface ArtGenerationRequest {
   submission: DreamSubmission;
   features: ExtractedDreamFeatures;
+  specification?: ArtworkSpecification;
   stylePresetKey?: string;
-  customPrompt?: string;
-  apiKey?: string;
+  isRegenerate?: boolean;
+  variationSeed?: number;
   canvasTarget?: HTMLCanvasElement;
 }
 
@@ -19,32 +23,30 @@ export interface ArtGenerationResponse {
   visualElementsDetected: string[];
   generationTimeMs: number;
   isFallback: boolean;
+  fallbackReason?: string;
   notes: string;
+  specification?: ArtworkSpecification;
+  artworkResult?: ArtworkResult;
 }
 
 export interface ImageGenerationProvider {
   id: ImageProviderType;
   name: string;
   description: string;
-  requiresApiKey: boolean;
   generate(request: ArtGenerationRequest): Promise<ArtGenerationResponse>;
 }
 
 /**
- * High-fidelity Procedural HTML5 Canvas Art Provider
- * Renders faithful visual motifs (trains, fish, birds, clocks, doors, forests, underwater environments, etc.)
- * entirely offline and in real-time.
+ * Procedural HTML5 Canvas Art Provider
+ * Renders faithful visual motifs entirely client-side using layered shaders and motif synthesis.
  */
 export class ProceduralCanvasProvider implements ImageGenerationProvider {
   public id: ImageProviderType = 'procedural_canvas';
-  public name = 'Procedural Canvas Engine (Real-Time)';
-  public description = 'Generates dream-grounded surrealist compositions directly on HTML5 Canvas using dynamic layered shaders and motif synthesis.';
-  public requiresApiKey = false;
+  public name = 'Procedural Canvas Engine';
+  public description = 'Generates dream-grounded surrealist compositions directly on HTML5 Canvas using dynamic layered shaders.';
 
   public async generate(request: ArtGenerationRequest): Promise<ArtGenerationResponse> {
     const startTime = performance.now();
-    
-    // Create an offscreen or provided canvas
     let canvas = request.canvasTarget;
     if (!canvas) {
       canvas = document.createElement('canvas');
@@ -74,73 +76,74 @@ export class ProceduralCanvasProvider implements ImageGenerationProvider {
 }
 
 /**
- * External Generative AI Model Provider (Imagen / Gemini / OpenAI / Replicate Connector)
- * Provides modular integration point for cloud generative image APIs,
- * with automatic, graceful fallback to Procedural Canvas if no API key is provided or network fails.
+ * Backend Generative AI Artwork Provider
+ * Calls server endpoint POST /api/generate-artwork with ArtworkSpecification.
+ * If backend fails or is offline, falls back seamlessly to ProceduralCanvasProvider.
  */
-export class ExternalGenerativeAIProvider implements ImageGenerationProvider {
-  public id: ImageProviderType = 'generative_ai_api';
-  public name = 'Generative AI Model API (Modular Connector)';
-  public description = 'Connects to an external image generation endpoint (e.g., Google Imagen 3, Gemini, or custom generative pipeline).';
-  public requiresApiKey = true;
+export class GenerativeAIArtworkProvider implements ImageGenerationProvider {
+  public id: ImageProviderType = 'real_ai';
+  public name = 'Somnithos AI Artwork Engine (Google Imagen 3 / Gemini)';
+  public description = 'Generates high-resolution museum surrealism grounded in your dream specification via secure server API.';
 
   private fallbackProvider = new ProceduralCanvasProvider();
 
   public async generate(request: ArtGenerationRequest): Promise<ArtGenerationResponse> {
     const startTime = performance.now();
-    const prompt = request.customPrompt || DreamArtGenerator.synthesizeArtPrompt(request.submission, request.features);
-
-    // If no API key is provided, gracefully use the high-fidelity procedural provider
-    if (!request.apiKey) {
-      const fallbackResult = await this.fallbackProvider.generate(request);
-      return {
-        ...fallbackResult,
-        provider: 'generative_ai_api',
-        isFallback: true,
-        notes: 'No external API key configured. Rendered using the High-Fidelity Procedural Somnithos Engine.'
-      };
-    }
+    const spec = request.specification || createArtworkSpecification(
+      request.submission as any,
+      request.features as any,
+      request.stylePresetKey || 'nocturne'
+    );
 
     try {
-      // Modular API endpoint call placeholder
-      // When user configures an endpoint/key in settings, the fetch is dispatched here
-      const response = await fetch('/api/generate-dream-image', {
+      const response = await fetch('/api/generate-artwork', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${request.apiKey}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          prompt,
-          aspectRatio: '3:2',
-          styleTheme: request.stylePresetKey || 'surrealist_museum'
+          specification: spec,
+          stylePresetKey: request.stylePresetKey || 'nocturne',
+          isRegenerate: request.isRegenerate,
+          variationSeed: request.variationSeed
         })
       });
 
       if (!response.ok) {
-        throw new Error(`API returned status ${response.status}`);
+        throw new Error(`API returned HTTP ${response.status}`);
       }
 
       const data = await response.json();
+      if (!data.success || !data.artwork) {
+        throw new Error(data.error || 'Invalid API response format');
+      }
+
+      const artwork: ArtworkResult = data.artwork;
       const endTime = performance.now();
 
       return {
-        imageUrl: data.imageUrl,
-        provider: 'generative_ai_api',
-        promptUsed: prompt,
-        visualElementsDetected: DreamArtGenerator.extractVisualElements(request.submission, request.features),
+        imageUrl: artwork.imageUrl,
+        provider: artwork.provider as ImageProviderType,
+        promptUsed: artwork.specification.artisticStyle + ' - ' + (artwork.specification.mustInclude.join(', ') || artwork.specification.title),
+        visualElementsDetected: artwork.specification.mustInclude.concat(artwork.specification.dominantSubjects),
         generationTimeMs: Math.round(endTime - startTime),
-        isFallback: false,
-        notes: 'Generated via external Generative Image Model API.'
+        isFallback: artwork.fallbackUsed,
+        fallbackReason: artwork.fallbackReason,
+        notes: artwork.fallbackUsed
+          ? `Fallback: ${artwork.fallbackReason}`
+          : `Generated by ${artwork.model || 'Generative AI'}. Creative visualization inspired by your description.`,
+        specification: artwork.specification,
+        artworkResult: artwork
       };
-    } catch (err) {
-      console.warn('External image generation API failed or unavailable, using procedural fallback:', err);
+    } catch (err: any) {
+      console.warn('Backend artwork API encountered error, switching to procedural fallback:', err);
       const fallbackResult = await this.fallbackProvider.generate(request);
       return {
         ...fallbackResult,
-        provider: 'generative_ai_api',
+        provider: 'procedural_canvas',
         isFallback: true,
-        notes: 'External API connection unavailable. Displaying Procedural Somnithos visual artwork.'
+        fallbackReason: `Server API unavailable (${err.message || 'offline'}). Rendered via procedural engine.`,
+        notes: 'Rendered using offline procedural engine fallback.'
       };
     }
   }
@@ -151,40 +154,46 @@ export class ExternalGenerativeAIProvider implements ImageGenerationProvider {
  */
 export class ImageGenerationService {
   private static providers: Record<ImageProviderType, ImageGenerationProvider> = {
-    procedural_canvas: new ProceduralCanvasProvider(),
-    generative_ai_api: new ExternalGenerativeAIProvider()
+    real_ai: new GenerativeAIArtworkProvider(),
+    mock_ai: new GenerativeAIArtworkProvider(),
+    procedural_canvas: new ProceduralCanvasProvider()
   };
 
-  private static activeProviderId: ImageProviderType = 'procedural_canvas';
-  private static apiKeyStorageKey = 'somnithos_image_api_key';
+  private static activeProviderId: ImageProviderType = 'real_ai';
+  private static isGenerating: boolean = false;
 
   public static setProvider(providerId: ImageProviderType) {
     this.activeProviderId = providerId;
   }
 
   public static getActiveProvider(): ImageGenerationProvider {
-    return this.providers[this.activeProviderId] || this.providers.procedural_canvas;
+    return this.providers[this.activeProviderId] || this.providers.real_ai;
   }
 
   public static getAllProviders(): ImageGenerationProvider[] {
-    return Object.values(this.providers);
+    return [
+      this.providers.real_ai,
+      this.providers.procedural_canvas
+    ];
   }
 
-  public static getApiKey(): string | null {
-    return localStorage.getItem(this.apiKeyStorageKey);
-  }
-
-  public static setApiKey(key: string) {
-    localStorage.setItem(this.apiKeyStorageKey, key);
+  public static isBusy(): boolean {
+    return this.isGenerating;
   }
 
   public static async generateArtwork(request: ArtGenerationRequest): Promise<ArtGenerationResponse> {
-    const provider = this.getActiveProvider();
-    const apiKey = request.apiKey || this.getApiKey() || undefined;
+    if (this.isGenerating) {
+      // Guard against double click / duplicate requests
+      throw new Error('An artwork generation request is already in progress.');
+    }
 
-    return provider.generate({
-      ...request,
-      apiKey
-    });
+    this.isGenerating = true;
+    try {
+      const provider = this.getActiveProvider();
+      const res = await provider.generate(request);
+      return res;
+    } finally {
+      this.isGenerating = false;
+    }
   }
 }

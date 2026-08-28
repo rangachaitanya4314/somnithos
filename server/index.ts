@@ -1,5 +1,6 @@
 import http from 'http';
 import { handleAnalyzeDreamRequest } from '../src/server/api/analyzeDreamHandler';
+import { handleGenerateArtworkRequest } from '../src/server/api/generateArtworkHandler';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
@@ -29,7 +30,27 @@ const server = http.createServer(async (req, res) => {
         res.end(JSON.stringify(apiRes.body));
       } catch (err: any) {
         res.writeHead(400, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ success: false, error: 'Invalid JSON request payload.' }));
+        res.end(JSON.stringify({ success: false, error: err?.message || 'Invalid JSON request payload.' }));
+      }
+    });
+    return;
+  }
+
+  if (req.url === '/api/generate-artwork' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk;
+    });
+
+    req.on('end', async () => {
+      try {
+        const parsed = JSON.parse(body || '{}');
+        const apiRes = await handleGenerateArtworkRequest(parsed);
+        res.writeHead(apiRes.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(apiRes.body));
+      } catch (err: any) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: false, error: err?.message || 'Invalid JSON request payload.' }));
       }
     });
     return;
@@ -37,7 +58,7 @@ const server = http.createServer(async (req, res) => {
 
   if (req.url === '/api/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', service: 'somnithos-analysis-api' }));
+    res.end(JSON.stringify({ status: 'ok', service: 'somnithos-backend-api' }));
     return;
   }
 

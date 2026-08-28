@@ -84,7 +84,7 @@ console.log(`\n  ✓ Synthesized Art Prompt:\n    "${analysisComplex.dreamArtwor
 console.log('\n[5] Testing Modular Image Generation Providers...');
 const providers = ImageGenerationService.getAllProviders();
 console.log(`  ✓ Available Providers (${providers.length}):`);
-providers.forEach(p => console.log(`    - ${p.name} (Requires Key: ${p.requiresApiKey})`));
+providers.forEach(p => console.log(`    - ${p.name} (${p.description})`));
 
 // 6. Test "No Reliable Source Found" Provenance Guarantee
 console.log('\n[6] Testing "No Reliable Source Found" Fallback on Ungrounded Sci-Fi Dream...');

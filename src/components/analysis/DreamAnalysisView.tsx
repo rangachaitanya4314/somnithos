@@ -56,9 +56,11 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
   const [sourceModalTarget, setSourceModalTarget] = useState<SourceViewerTarget | null>(null);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
   const [currentStylePreset, setCurrentStylePreset] = useState<string>('nocturne');
-  const [selectedProvider, setSelectedProvider] = useState<ImageProviderType>('procedural_canvas');
+  const [selectedProvider, setSelectedProvider] = useState<ImageProviderType>('real_ai');
   const [artDataUrl, setArtDataUrl] = useState<string>('');
   const [isGeneratingArt, setIsGeneratingArt] = useState<boolean>(false);
+  const [variationSeed, setVariationSeed] = useState<number>(0);
+  const [artworkMetadata, setArtworkMetadata] = useState<{ isFallback: boolean; notes: string } | null>(null);
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [isPublished, setIsPublished] = useState<boolean>(false);
   const [copiedQuote, setCopiedQuote] = useState<boolean>(false);
@@ -70,21 +72,27 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
   useEffect(() => {
     let isCancelled = false;
     const generate = async () => {
-      if (!canvasRef.current) return;
       setIsGeneratingArt(true);
+      try {
+        ImageGenerationService.setProvider(selectedProvider);
+        const res = await ImageGenerationService.generateArtwork({
+          submission,
+          features: analysis.extractedFeatures,
+          stylePresetKey: currentStylePreset,
+          variationSeed: 0,
+          canvasTarget: canvasRef.current || undefined
+        });
 
-      ImageGenerationService.setProvider(selectedProvider);
-      const res = await ImageGenerationService.generateArtwork({
-        submission,
-        features: analysis.extractedFeatures,
-        stylePresetKey: currentStylePreset,
-        canvasTarget: canvasRef.current
-      });
-
-      if (!isCancelled) {
-        setArtDataUrl(res.imageUrl);
-        analysis.dreamArtwork.imageUrl = res.imageUrl;
-        setIsGeneratingArt(false);
+        if (!isCancelled) {
+          setArtDataUrl(res.imageUrl);
+          setArtworkMetadata({ isFallback: res.isFallback, notes: res.notes });
+        }
+      } catch (err) {
+        console.warn('Artwork generation error:', err);
+      } finally {
+        if (!isCancelled) {
+          setIsGeneratingArt(false);
+        }
       }
     };
 
@@ -93,7 +101,31 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
     return () => {
       isCancelled = true;
     };
-  }, [submission, analysis, currentStylePreset, selectedProvider]);
+  }, [submission, analysis.extractedFeatures, currentStylePreset, selectedProvider]);
+
+  const handleRegenerateArtwork = async () => {
+    if (isGeneratingArt) return;
+    const nextSeed = variationSeed + 1;
+    setVariationSeed(nextSeed);
+    setIsGeneratingArt(true);
+    try {
+      ImageGenerationService.setProvider(selectedProvider);
+      const res = await ImageGenerationService.generateArtwork({
+        submission,
+        features: analysis.extractedFeatures,
+        stylePresetKey: currentStylePreset,
+        isRegenerate: true,
+        variationSeed: nextSeed,
+        canvasTarget: canvasRef.current || undefined
+      });
+      setArtDataUrl(res.imageUrl);
+      setArtworkMetadata({ isFallback: res.isFallback, notes: res.notes });
+    } catch (err) {
+      console.warn('Regeneration error:', err);
+    } finally {
+      setIsGeneratingArt(false);
+    }
+  };
 
   // Check if saved already
   useEffect(() => {
@@ -711,7 +743,9 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
               <Palette size={14} className="text-cyan" />
               <span>STEP 06 · IMAGINATION LAYER · ARTISTIC VISUALIZATION</span>
             </span>
-            <span className="artwork-disclaimer-pill">Faithfully Synthesized Dream Art</span>
+            <span className="artwork-disclaimer-pill">
+              {artworkMetadata?.isFallback ? 'Procedural Fallback Artwork' : 'AI-Generated Artwork'}
+            </span>
           </div>
 
           <div className="artwork-header-flex">
@@ -730,18 +764,18 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                 </span>
                 <div className="provider-pills">
                   <button
+                    className={`provider-pill ${selectedProvider === 'real_ai' ? 'active' : ''}`}
+                    onClick={() => setSelectedProvider('real_ai')}
+                    title="Somnithos AI Artwork Engine (Server API with safe fallback)"
+                  >
+                    AI Dream Engine
+                  </button>
+                  <button
                     className={`provider-pill ${selectedProvider === 'procedural_canvas' ? 'active' : ''}`}
                     onClick={() => setSelectedProvider('procedural_canvas')}
                     title="Real-time HTML5 Canvas layered procedural shader synthesis"
                   >
                     Procedural Canvas
-                  </button>
-                  <button
-                    className={`provider-pill ${selectedProvider === 'generative_ai_api' ? 'active' : ''}`}
-                    onClick={() => setSelectedProvider('generative_ai_api')}
-                    title="External Generative Image API (with automatic procedural fallback)"
-                  >
-                    Generative AI API
                   </button>
                 </div>
               </div>
@@ -766,16 +800,38 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
 
           {/* Cinematic Canvas Frame */}
           <div className="artwork-display-frame">
-            <canvas ref={canvasRef} className="dream-canvas-element" />
+            {artDataUrl && selectedProvider !== 'procedural_canvas' ? (
+              <img
+                src={artDataUrl}
+                alt="Dream Visualization"
+                className="dream-image-element"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }}
+              />
+            ) : null}
+
+            <canvas
+              ref={canvasRef}
+              className="dream-canvas-element"
+              style={{ display: artDataUrl && selectedProvider !== 'procedural_canvas' ? 'none' : 'block' }}
+            />
 
             {isGeneratingArt && (
               <div className="artwork-generating-overlay">
                 <Sparkles size={24} className="spinning text-gold" />
-                <span>Synthesizing Dream Visualization...</span>
+                <span>Imagining your dream...</span>
               </div>
             )}
 
             <div className="artwork-overlay-controls">
+              <button
+                className="art-control-btn regenerate-btn"
+                onClick={handleRegenerateArtwork}
+                disabled={isGeneratingArt}
+                title="Regenerate visualization variation preserving dream details"
+              >
+                <RefreshCw size={16} className={isGeneratingArt ? 'spinning' : ''} />
+                <span>Regenerate</span>
+              </button>
               <button
                 className="art-control-btn download-btn"
                 onClick={handleDownloadArtwork}

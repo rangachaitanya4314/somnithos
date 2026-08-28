@@ -273,7 +273,9 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
       title: input.title || 'Explorations in Meaning & Context',
       possibleInterpretations: narrativeArcs,
       narrativeArcs,
+      primarySynthesis: narrativeArcs[0] || 'One possible reading of this dream invites contemplation on how the imagery intersects with your waking awareness.',
       emotionalReading,
+      emotionalResonance: emotionalReading,
       symbolicEchoes,
       suggestiveQuestions,
       uncertaintyStatement

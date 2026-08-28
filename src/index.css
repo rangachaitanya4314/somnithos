@@ -4974,3 +4974,367 @@ input, textarea, select {
   }
 }
 
+/* =========================================================================
+   Step 5: Somnithos Result Experience & Loading Sequence Styling
+   ========================================================================= */
+
+/* Analysis Loading Overlay */
+.analysis-loading-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 7, 18, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1.5rem;
+}
+
+.analysis-loading-card {
+  background: radial-gradient(circle at center, rgba(16, 26, 54, 0.95) 0%, rgba(7, 11, 24, 0.98) 100%);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2.5rem;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(197, 160, 89, 0.15);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.loading-orbit-rings {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid transparent;
+}
+
+.orbit-ring.ring-1 {
+  inset: 0;
+  border-top: 2px solid var(--accent-gold);
+  border-right: 1px solid rgba(197, 160, 89, 0.3);
+  animation: spin 3s linear infinite;
+}
+
+.orbit-ring.ring-2 {
+  inset: 12px;
+  border-bottom: 2px solid var(--text-cyan);
+  border-left: 1px solid rgba(56, 189, 248, 0.3);
+  animation: spinReverse 4s linear infinite;
+}
+
+.orbit-center-icon {
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinning-slow {
+  animation: spin 6s linear infinite;
+}
+
+.loading-step-title {
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.65rem;
+  min-height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-step-subtitle {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  margin-bottom: 1.75rem;
+}
+
+.loading-progress-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.loading-progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.loading-progress-dot.active {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 10px var(--accent-gold);
+  transform: scale(1.3);
+}
+
+.loading-progress-dot.completed {
+  background: var(--text-cyan);
+  border-color: var(--text-cyan);
+}
+
+/* Result Header Intro Lead */
+.analysis-intro-lead {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 1.25rem;
+  max-width: 820px;
+}
+
+/* Clamped Narrative & Expand Button */
+.analysis-dream-excerpt.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.expand-narrative-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+  background: transparent;
+  border: 1px solid var(--border-gold);
+  color: var(--text-gold);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.35rem 0.85rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.expand-narrative-btn:hover {
+  background: rgba(197, 160, 89, 0.12);
+  color: #fde047;
+}
+
+/* Context Details Toggle */
+.context-details-wrapper {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+}
+
+.context-details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--text-cyan);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.4rem 0;
+}
+
+.context-details-toggle:hover {
+  text-decoration: underline;
+}
+
+/* Step 02: What Somnithos Noticed */
+.noticed-card {
+  background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.04) 0%, rgba(12, 18, 38, 0.75) 60%);
+  border-color: rgba(56, 189, 248, 0.3);
+}
+
+.noticed-motifs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.noticed-motif-card {
+  background: rgba(6, 10, 22, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.15rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.noticed-motif-card:hover {
+  border-color: var(--border-gold);
+  background: rgba(12, 18, 38, 0.85);
+  transform: translateY(-2px);
+}
+
+.noticed-motif-card.selected {
+  border-color: var(--accent-gold);
+  background: rgba(197, 160, 89, 0.08);
+  box-shadow: 0 0 15px rgba(197, 160, 89, 0.15);
+}
+
+.motif-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.6rem;
+}
+
+.motif-name-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.motif-tap-hint {
+  font-size: 0.75rem;
+  color: var(--text-gold);
+  font-weight: 600;
+}
+
+.motif-card-note {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Epistemic Boundary Divider */
+.epistemic-boundary-divider {
+  margin: 3.5rem 0;
+  text-align: center;
+  position: relative;
+}
+
+.divider-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border-gold) 30%, var(--border-gold) 70%, transparent 100%);
+  margin: 1.25rem 0;
+  opacity: 0.5;
+}
+
+.divider-badge-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.5rem 1.25rem;
+  background: rgba(7, 11, 24, 0.95);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-full);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.divider-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.divider-tag.evidence-tag {
+  color: var(--text-gold);
+}
+
+.divider-tag.reflection-tag {
+  color: var(--text-cyan);
+}
+
+.divider-vs {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.divider-caption {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: var(--text-muted);
+  max-width: 680px;
+  margin: 0.85rem auto 0;
+  line-height: 1.55;
+}
+
+/* Questions to Consider */
+.questions-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.question-item {
+  margin-bottom: 0.55rem;
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.55;
+}
+
+/* Mobile Responsive Refinements (approx 390px) */
+@media (max-width: 480px) {
+  .analysis-top-nav-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .analysis-meta-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .analysis-actions-row {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .analysis-actions-row .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .noticed-motifs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .divider-badge-box {
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.65rem 1rem;
+  }
+
+  .divider-vs {
+    display: none;
+  }
+
+  .artwork-header-flex {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .artwork-controls-toolbar {
+    width: 100%;
+    flex-direction: column;
+  }
+}
+

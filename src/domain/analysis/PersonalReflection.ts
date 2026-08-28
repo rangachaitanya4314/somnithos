@@ -11,8 +11,12 @@ export interface PersonalReflection {
   title: string;
   possibleInterpretations: string[];
   narrativeArcs: string[]; // Backwards compatibility alias
+  primarySynthesis?: string;
   emotionalReading: string;
+  emotionalResonance?: string;
   symbolicEchoes: string[];
   suggestiveQuestions: string[];
   uncertaintyStatement: string;
+  poeticReflection?: string;
+  message?: string;
 }

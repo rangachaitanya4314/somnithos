@@ -81,6 +81,8 @@ export interface DreamAnalysisResult {
     narrativeArcs: string[];
     symbolicEchoes: string[];
     suggestiveQuestions: string[];
+    primarySynthesis?: string;
+    emotionalResonance?: string;
     possibleInterpretations?: string[];
     emotionalReading?: string;
     uncertaintyStatement?: string;

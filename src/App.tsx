@@ -13,6 +13,7 @@ import { SavedDreamsView } from './components/saved/SavedDreamsView';
 import type { DreamSubmission, DreamAnalysisResult } from './types/dream';
 import { DreamAnalysisApiService } from './services/api/dreamAnalysisApi';
 import { DreamAnalysisEngine } from './services/dreamAnalysisEngine';
+import { AnalysisLoadingOverlay } from './components/common/AnalysisLoadingOverlay';
 import { StorageService } from './services/storageService';
 
 export const App: React.FC = () => {
@@ -78,6 +79,7 @@ export const App: React.FC = () => {
     <div className="app-root">
       {/* 1. Starfield & Nebula Ambient Background */}
       <AmbientBackground />
+      <AnalysisLoadingOverlay isOpen={isAnalyzing} />
 
       {/* 2. Top Header Navigation */}
       <Header

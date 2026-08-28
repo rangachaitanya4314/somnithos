@@ -3,6 +3,7 @@ import { COMMUNITY_DEMO_DREAMS } from '../data/communityDemo';
 import type { SavedDreamRecord } from '../domain/journal/SavedDreamRecord';
 import { LocalStorageDreamRepository } from './storage/LocalStorageDreamRepository';
 import type { DreamRepository } from '../domain/journal/DreamRepository';
+import { CommunityService } from './community/CommunityService';
 
 const COMMUNITY_POSTS_KEY = 'somnithos_community_posts_v1';
 const USER_REACTIONS_KEY = 'somnithos_user_reactions_v1';
@@ -118,8 +119,12 @@ export class StorageService {
   /**
    * Deletes a saved dream by submission/dream ID.
    */
+  /**
+   * Deletes a saved dream by submission/dream ID.
+   */
   public static deleteSavedDream(submissionId: string): void {
     this.repository.deleteDream(submissionId);
+    CommunityService.deleteSharedDream(submissionId);
   }
 
   /**
@@ -133,7 +138,15 @@ export class StorageService {
       privacyStatus,
       updatedAt: new Date().toISOString()
     };
-    return this.repository.updateDream(updated);
+    const saved = await this.repository.updateDream(updated);
+
+    if (privacyStatus === 'SHARED_ANONYMOUSLY') {
+      await CommunityService.shareDreamAnonymously(saved);
+    } else {
+      await CommunityService.stopSharingDream(dreamId);
+    }
+
+    return saved;
   }
 
   /**

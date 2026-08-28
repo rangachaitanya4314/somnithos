@@ -24,7 +24,9 @@ import {
   X,
   ChevronRight,
   TrendingUp,
-  HelpCircle
+  BookOpen,
+  Heart,
+  Compass
 } from 'lucide-react';
 
 interface SavedDreamsViewProps {
@@ -127,17 +129,28 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
     return result;
   }, [dreams, searchQuery, selectedEmotionFilter, selectedMotifFilter, selectedPrivacyFilter, sortOrder]);
 
+  // Privacy Confirmation Modal State
+  const [privacyModalDream, setPrivacyModalDream] = useState<SavedDreamRecord | null>(null);
+  const [privacyAction, setPrivacyAction] = useState<'SHARE' | 'STOP_SHARING'>('SHARE');
+
   const handleConfirmDelete = async () => {
     if (!dreamToDelete) return;
-    await StorageService.getRepository().deleteDream(dreamToDelete.dreamId);
+    StorageService.deleteSavedDream(dreamToDelete.dreamId);
     setDreamToDelete(null);
     await loadDreams();
   };
 
-  const handleTogglePrivacy = async (dream: SavedDreamRecord, e: React.MouseEvent) => {
+  const handleOpenPrivacyModal = (dream: SavedDreamRecord, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newStatus = dream.privacyStatus === 'PRIVATE' ? 'SHARED_ANONYMOUSLY' : 'PRIVATE';
-    await StorageService.updateDreamPrivacy(dream.dreamId, newStatus);
+    setPrivacyModalDream(dream);
+    setPrivacyAction(dream.privacyStatus === 'PRIVATE' ? 'SHARE' : 'STOP_SHARING');
+  };
+
+  const handleConfirmPrivacyToggle = async () => {
+    if (!privacyModalDream) return;
+    const newStatus = privacyAction === 'SHARE' ? 'SHARED_ANONYMOUSLY' : 'PRIVATE';
+    await StorageService.updateDreamPrivacy(privacyModalDream.dreamId, newStatus);
+    setPrivacyModalDream(null);
     await loadDreams();
   };
 
@@ -343,7 +356,7 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
                             {/* Privacy Toggle Badge */}
                             <button
                               className={`privacy-toggle-btn ${dream.privacyStatus === 'PRIVATE' ? 'private' : 'shared'}`}
-                              onClick={e => handleTogglePrivacy(dream, e)}
+                              onClick={e => handleOpenPrivacyModal(dream, e)}
                               title={
                                 dream.privacyStatus === 'PRIVATE'
                                   ? 'Private to your local vault. Click to share anonymously.'
@@ -443,10 +456,18 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
                       <div className="timeline-card-header">
                         <h4 className="timeline-dream-title">{dream.title}</h4>
                         <div className="timeline-badges-row">
-                          <span className={`privacy-mini-badge ${dream.privacyStatus === 'PRIVATE' ? 'private' : 'shared'}`}>
+                          <button
+                            className={`privacy-mini-badge ${dream.privacyStatus === 'PRIVATE' ? 'private' : 'shared'}`}
+                            onClick={e => handleOpenPrivacyModal(dream, e)}
+                            title={
+                              dream.privacyStatus === 'PRIVATE'
+                                ? 'Click to share anonymously with community'
+                                : 'Click to stop sharing and make private'
+                            }
+                          >
                             {dream.privacyStatus === 'PRIVATE' ? <Lock size={10} /> : <Globe size={10} />}
                             <span>{dream.privacyStatus === 'PRIVATE' ? 'Private' : 'Shared'}</span>
-                          </span>
+                          </button>
                           <button
                             className="delete-entry-btn mini-btn"
                             onClick={e => {
@@ -490,63 +511,67 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
                   setSelectedPrivacyFilter('all');
                 }}
               >
-                Reset All Filters
+                Clear All Filters
               </button>
             </div>
           ) : (
-            <div className="saved-empty-state">
+            <div className="empty-archive-state">
               <div className="empty-icon-box">
-                <Bookmark size={36} className="text-gold" />
+                <BookOpen size={36} className="text-gold" />
               </div>
-              <h3>Your Personal Archive is Empty</h3>
+              <h3>Your Dream Vault is Quiet</h3>
               <p>
-                Save your dream analyses to build a private nocturnal archive and discover recurring narrative patterns over time.
+                Analyze a dream and tap <strong>&quot;Save to Dream Journal&quot;</strong> to privately archive your nocturnal journeys.
               </p>
               <button className="btn btn-primary" onClick={onNewDream}>
                 <Sparkles size={16} />
-                <span>Tell Me Your Dream →</span>
+                <span>Begin Dream Analysis</span>
               </button>
             </div>
           )}
         </div>
       )}
 
-      {/* 3. TAB 2: RECURRING PATTERN EXPLORER */}
+      {/* 3. RECURRING PATTERNS VIEW */}
       {activeTab === 'patterns' && (
-        <div className="patterns-view-content">
-          <div className="pattern-intro-banner">
-            <div className="pattern-intro-left">
-              <TrendingUp size={20} className="text-gold" />
-              <div>
-                <h3 className="pattern-intro-title">Your Observed Nocturnal Patterns</h3>
-                <p className="pattern-intro-desc">
-                  Strictly descriptive observations across your dream history. Somnithos documents what motifs, settings, and emotional sequences recur without fabricating psychological diagnoses.
-                </p>
-              </div>
+        <div className="patterns-view-wrapper">
+          <div className="patterns-header-box">
+            <div className="patterns-title-row">
+              <h3>Observed Recurring Patterns</h3>
+              <span className="patterns-count-badge">
+                {detectedPatterns.length} {detectedPatterns.length === 1 ? 'Pattern Detected' : 'Patterns Detected'}
+              </span>
             </div>
-            <div className="pattern-stat-box">
-              <span className="stat-big-num">{detectedPatterns.length}</span>
-              <span className="stat-label">Observed Patterns</span>
-            </div>
+            <p className="patterns-subtitle">
+              Patterns represent observed repetitions across your saved dreams (&ge; 2 occurrences). Somnithos provides descriptive observations, not psychological diagnoses.
+            </p>
           </div>
 
           {detectedPatterns.length > 0 ? (
-            <div className="patterns-cards-grid">
+            <div className="patterns-grid">
               {detectedPatterns.map(pattern => (
                 <div
                   key={pattern.id}
-                  className="pattern-explorer-card"
+                  className="pattern-card"
                   onClick={() => setSelectedPattern(pattern)}
                   role="button"
                   tabIndex={0}
                   onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') setSelectedPattern(pattern);
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedPattern(pattern);
+                    }
                   }}
                 >
                   <div className="pattern-card-top">
-                    <span className={`pattern-type-tag ${pattern.type.toLowerCase()}`}>
-                      {pattern.type.replace(/_/g, ' ')}
+                    <span className="pattern-type-tag">
+                      {pattern.type === 'MOTIF' && <Sparkles size={12} />}
+                      {pattern.type === 'EMOTION' && <Heart size={12} />}
+                      {pattern.type === 'EMOTIONAL_SEQUENCE' && <TrendingUp size={12} />}
+                      {pattern.type === 'SETTING' && <Compass size={12} />}
+                      <span>{pattern.type.replace('_', ' ')}</span>
                     </span>
+
                     <span className="pattern-freq-pill">
                       {pattern.count} {pattern.count === 1 ? 'dream' : 'dreams'}
                     </span>
@@ -598,25 +623,48 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
             className="pattern-drawer-panel"
             onClick={e => e.stopPropagation()}
             role="dialog"
-            aria-label={`Pattern detail for ${selectedPattern.label}`}
+            aria-modal="true"
+            aria-labelledby="pattern-drawer-title"
           >
-            <div className="drawer-header">
+            <div className="pattern-drawer-header">
               <div>
-                <span className="pattern-type-tag gold">{selectedPattern.type.replace(/_/g, ' ')}</span>
-                <h3 className="drawer-title">{selectedPattern.label}</h3>
+                <span className="drawer-eyebrow">OBSERVED PATTERN DETAIL</span>
+                <h3 id="pattern-drawer-title" className="drawer-title">{selectedPattern.label}</h3>
               </div>
-              <button className="drawer-close-btn" onClick={() => setSelectedPattern(null)}>
-                <X size={18} />
+              <button
+                className="close-drawer-btn"
+                onClick={() => setSelectedPattern(null)}
+                aria-label="Close pattern drawer"
+              >
+                <X size={20} />
               </button>
             </div>
 
-            <div className="drawer-body">
+            <div className="pattern-drawer-content">
+              {/* Stats Bar */}
+              <div className="pattern-stats-row">
+                <div className="stat-box">
+                  <span className="stat-num">{selectedPattern.count}</span>
+                  <span className="stat-lbl">Dream Occurrences</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-num">{Math.round((selectedPattern.confidence || 0) * 100)}%</span>
+                  <span className="stat-lbl">Archive Presence</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-num">{selectedPattern.type.replace('_', ' ')}</span>
+                  <span className="stat-lbl">Pattern Dimension</span>
+                </div>
+              </div>
+
+              {/* Descriptive Observation */}
               <div className="pattern-summary-box">
-                <p className="pattern-primary-statement">{selectedPattern.description}</p>
-                <div className="pattern-confidence-row">
-                  <span className="confidence-label">Observed Frequency:</span>
-                  <span className="confidence-val">
-                    {selectedPattern.count} out of {selectedPattern.totalDreams} saved dreams ({Math.round(selectedPattern.confidence * 100)}%)
+                <h4>Observational Summary</h4>
+                <p>{selectedPattern.description}</p>
+                <div className="pattern-date-span-box">
+                  <Calendar size={14} className="text-gold" />
+                  <span>
+                    Observed between {new Date(selectedPattern.firstObservedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })} and {new Date(selectedPattern.lastObservedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
               </div>
@@ -633,19 +681,25 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
                         setSelectedPattern(null);
                         handleOpenDream(matchDream);
                       }}
+                      role="button"
+                      tabIndex={0}
                     >
-                      <div className="occurrence-date-pill">
-                        {new Date(matchDream.createdAt).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
+                      <div className="occurrence-meta">
+                        <span className="occurrence-date">
+                          {new Date(matchDream.createdAt).toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </span>
+                        <span className={`occurrence-privacy ${matchDream.privacyStatus === 'PRIVATE' ? 'private' : 'shared'}`}>
+                          {matchDream.privacyStatus === 'PRIVATE' ? <Lock size={10} /> : <Globe size={10} />}
+                          <span>{matchDream.privacyStatus === 'PRIVATE' ? 'Private' : 'Shared'}</span>
+                        </span>
                       </div>
 
-                      <div className="occurrence-info">
-                        <h5 className="occurrence-dream-title">{matchDream.title}</h5>
-                        <p className="occurrence-excerpt">&quot;{matchDream.originalNarrative}&quot;</p>
-                      </div>
+                      <h5 className="occurrence-dream-title">{matchDream.title}</h5>
+                      <p className="occurrence-snippet">&quot;{matchDream.originalNarrative}&quot;</p>
 
                       <button className="open-synthesis-mini-btn" title="Open complete dream analysis">
                         <ArrowRight size={14} />
@@ -654,19 +708,92 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
                   ))}
                 </div>
               </div>
-
-              <div className="pattern-non-diagnostic-note">
-                <HelpCircle size={14} className="text-gold" />
-                <span>
-                  Somnithos does not assign fixed universal psychological meanings to patterns. Recurring elements represent observed nocturnal themes across your personal archive.
-                </span>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 5. DELETE CONFIRMATION MODAL */}
+      {/* 5. PRIVACY CONFIRMATION MODAL (Step 7 Explicit Consent Flow) */}
+      {privacyModalDream && (
+        <div className="modal-overlay" onClick={() => setPrivacyModalDream(null)} role="dialog" aria-modal="true">
+          <div className="modal-content privacy-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-header-icon-wrap">
+                {privacyAction === 'SHARE' ? (
+                  <Globe size={22} className="text-gold" />
+                ) : (
+                  <Lock size={22} className="text-gold" />
+                )}
+                <h3 className="modal-title">
+                  {privacyAction === 'SHARE' ? 'Share Dream Anonymously' : 'Stop Sharing Dream'}
+                </h3>
+              </div>
+              <button
+                className="close-btn"
+                onClick={() => setPrivacyModalDream(null)}
+                aria-label="Close dialog"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {privacyAction === 'SHARE' ? (
+                <>
+                  <p className="privacy-modal-lead">
+                    This will share your dream anonymously with the Somnithos community without your personal identity.
+                  </p>
+                  <div className="privacy-comparison-box">
+                    <div className="comparison-item">
+                      <Lock size={14} className="text-gold" />
+                      <div>
+                        <strong>Private (Default):</strong> Only you can view this dream in your local vault.
+                      </div>
+                    </div>
+                    <div className="comparison-item">
+                      <Globe size={14} className="text-gold" />
+                      <div>
+                        <strong>Shared Anonymously:</strong> Visible to the community gallery without your name, email, or account metadata.
+                      </div>
+                    </div>
+                  </div>
+                  <p className="privacy-modal-subtext">
+                    You can revoke sharing and return this dream to private status at any time.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="privacy-modal-lead">
+                    Are you sure you want to stop sharing <strong>&quot;{privacyModalDream.title}&quot;</strong>?
+                  </p>
+                  <p className="privacy-modal-subtext">
+                    This dream will immediately be removed from the public community wall and search listings. It will remain safely in your private journal.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setPrivacyModalDream(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleConfirmPrivacyToggle}
+              >
+                {privacyAction === 'SHARE' ? 'Share Anonymously' : 'Stop Sharing'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. DELETE CONFIRMATION MODAL */}
       {dreamToDelete && (
         <div className="confirm-delete-backdrop" onClick={() => setDreamToDelete(null)}>
           <div
@@ -685,7 +812,7 @@ export const SavedDreamsView: React.FC<SavedDreamsViewProps> = ({ onSelectDream,
             </p>
 
             <p className="delete-modal-subtext">
-              This action will remove the dream record, extracted features, and generated artwork from your local storage vault.
+              This action will remove the dream record, extracted features, and generated artwork from your local storage vault and community listings.
             </p>
 
             <div className="delete-modal-actions">

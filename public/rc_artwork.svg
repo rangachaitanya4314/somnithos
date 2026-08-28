@@ -1,0 +1,126 @@
+<svg viewBox="0 0 900 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rc-steel-linear" x1="150" y1="180" x2="600" y2="720" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#f1f5f9" />
+      <stop offset="18%" stop-color="#94a3b8" />
+      <stop offset="38%" stop-color="#475569" />
+      <stop offset="55%" stop-color="#cbd5e1" />
+      <stop offset="72%" stop-color="#334155" />
+      <stop offset="88%" stop-color="#e2e8f0" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+
+    <linearGradient id="rc-steel-bevel" x1="200" y1="160" x2="200" y2="750" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.85" />
+      <stop offset="25%" stop-color="#94a3b8" stop-opacity="0.4" />
+      <stop offset="60%" stop-color="#1e293b" stop-opacity="0.8" />
+      <stop offset="100%" stop-color="#64748b" stop-opacity="0.6" />
+    </linearGradient>
+
+    <linearGradient id="rc-steel-shadow" x1="300" y1="200" x2="550" y2="750" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#1e293b" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#090d16" stop-opacity="0.95" />
+    </linearGradient>
+
+    <linearGradient id="rc-crimson-linear" x1="420" y1="180" x2="780" y2="720" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ff4d4d" />
+      <stop offset="22%" stop-color="#dc2626" />
+      <stop offset="48%" stop-color="#991b1b" />
+      <stop offset="70%" stop-color="#ef4444" />
+      <stop offset="88%" stop-color="#7f1d1d" />
+      <stop offset="100%" stop-color="#450a0a" />
+    </linearGradient>
+
+    <radialGradient id="rc-crimson-glow" cx="620" cy="450" r="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.35" />
+      <stop offset="45%" stop-color="#b91c1c" stop-opacity="0.18" />
+      <stop offset="80%" stop-color="#7f1d1d" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="transparent" stop-opacity="0" />
+    </radialGradient>
+
+    <radialGradient id="rc-core-nebula" cx="450" cy="450" r="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#1e293b" stop-opacity="0.6" />
+      <stop offset="35%" stop-color="#0e172a" stop-opacity="0.4" />
+      <stop offset="65%" stop-color="#070b18" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="transparent" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="rc-gold-accent" x1="200" y1="200" x2="700" y2="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fde047" />
+      <stop offset="40%" stop-color="#c5a059" />
+      <stop offset="75%" stop-color="#996515" />
+      <stop offset="100%" stop-color="#d4af37" />
+    </linearGradient>
+  </defs>
+
+  <circle cx="450" cy="450" r="420" fill="url(#rc-core-nebula)" />
+  <circle cx="600" cy="450" r="280" fill="url(#rc-crimson-glow)" />
+
+  <g opacity="0.65">
+    <circle cx="450" cy="450" r="410" stroke="rgba(197, 160, 89, 0.22)" stroke-width="1.2" stroke-dasharray="3 7" />
+    <circle cx="450" cy="450" r="390" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <ellipse cx="450" cy="450" rx="420" ry="180" stroke="rgba(56, 189, 248, 0.16)" stroke-width="1.2" transform="rotate(-28 450 450)" stroke-dasharray="6 8" />
+    <ellipse cx="450" cy="450" rx="400" ry="150" stroke="rgba(197, 160, 89, 0.14)" stroke-width="1" transform="rotate(32 450 450)" stroke-dasharray="4 6" />
+    <circle cx="450" cy="450" r="310" stroke="rgba(197, 160, 89, 0.18)" stroke-width="1" />
+    <circle cx="450" cy="450" r="210" stroke="rgba(255, 255, 255, 0.06)" stroke-width="1" stroke-dasharray="2 4" />
+    <line x1="450" y1="30" x2="450" y2="870" stroke="rgba(197, 160, 89, 0.12)" stroke-width="1" stroke-dasharray="4 8" />
+    <line x1="30" y1="450" x2="870" y2="450" stroke="rgba(197, 160, 89, 0.12)" stroke-width="1" stroke-dasharray="4 8" />
+    <polygon points="450,34 456,40 450,46 444,40" fill="#c5a059" opacity="0.75" />
+    <polygon points="450,854 456,860 450,866 444,860" fill="#c5a059" opacity="0.75" />
+    <polygon points="34,450 40,456 46,450 40,444" fill="#c5a059" opacity="0.75" />
+    <polygon points="854,450 860,456 866,450 860,444" fill="#c5a059" opacity="0.75" />
+  </g>
+
+  <g>
+    <path
+      d="M 680 230 C 580 160, 410 170, 340 260 C 270 350, 270 550, 340 640 C 410 730, 580 740, 680 670 C 705 652, 725 630, 740 605 L 675 555 C 650 595, 570 635, 500 620 C 425 605, 385 530, 385 450 C 385 370, 425 295, 500 280 C 570 265, 650 305, 675 345 Z"
+      fill="url(#rc-crimson-linear)"
+      opacity="0.95"
+    />
+    <path
+      d="M 670 240 C 585 180, 430 190, 360 275 C 295 355, 295 545, 360 625 C 430 710, 585 720, 670 660 L 650 615 C 575 660, 455 645, 410 580 C 375 520, 375 380, 410 320 C 455 255, 575 240, 650 285 Z"
+      fill="none"
+      stroke="rgba(255, 120, 120, 0.45)"
+      stroke-width="3"
+    />
+  </g>
+
+  <g>
+    <path
+      d="M 210 200 L 460 200 C 555 200, 620 250, 620 340 C 620 415, 570 460, 495 478 L 645 710 L 525 710 L 395 490 L 320 490 L 320 710 L 210 710 Z"
+      fill="url(#rc-steel-linear)"
+    />
+    <path
+      d="M 320 285 L 450 285 C 495 285, 525 305, 525 345 C 525 385, 495 405, 450 405 L 320 405 Z"
+      fill="#070c1a"
+    />
+    <path
+      d="M 210 200 L 460 200 C 555 200, 620 250, 620 340 C 620 365, 610 390, 595 410 L 580 395 C 595 375, 602 355, 602 340 C 602 265, 545 220, 460 220 L 230 220 L 230 710 L 210 710 Z"
+      fill="url(#rc-steel-bevel)"
+    />
+    <path
+      d="M 495 478 L 645 710 L 620 710 L 480 490 Z"
+      fill="url(#rc-steel-bevel)"
+      opacity="0.75"
+    />
+    <path
+      d="M 205 198 L 465 198 C 560 198, 625 250, 625 340"
+      fill="none"
+      stroke="url(#rc-gold-accent)"
+      stroke-width="1.5"
+      opacity="0.8"
+    />
+  </g>
+
+  <g opacity="0.8">
+    <circle cx="210" cy="200" r="3" fill="#ffffff" />
+    <circle cx="620" cy="340" r="3" fill="#ffffff" />
+    <circle cx="645" cy="710" r="3" fill="#c5a059" />
+    <circle cx="210" cy="710" r="3" fill="#c5a059" />
+    <circle cx="680" cy="230" r="2.5" fill="#f87171" />
+    <circle cx="680" cy="670" r="2.5" fill="#f87171" />
+    <circle cx="340" cy="260" r="2" fill="#ffffff" />
+    <circle cx="340" cy="640" r="2" fill="#ffffff" />
+  </g>
+</svg>

@@ -1,10 +1,11 @@
 import type { DreamSubmission, DreamAnalysisResult, CommunityDreamPost } from '../types/dream';
 import { COMMUNITY_DEMO_DREAMS } from '../data/communityDemo';
+import type { SavedDreamRecord } from '../domain/journal/SavedDreamRecord';
+import { LocalStorageDreamRepository } from './storage/LocalStorageDreamRepository';
+import type { DreamRepository } from '../domain/journal/DreamRepository';
 
-const SAVED_ANALYSES_KEY = 'somnithos_saved_analyses_v1';
 const COMMUNITY_POSTS_KEY = 'somnithos_community_posts_v1';
 const USER_REACTIONS_KEY = 'somnithos_user_reactions_v1';
-const LEGACY_SAVED_KEY = 'dreamscape_saved_analyses_v1';
 const LEGACY_COMMUNITY_KEY = 'dreamscape_community_posts_v1';
 const LEGACY_REACTIONS_KEY = 'dreamscape_user_reactions_v1';
 
@@ -15,50 +16,124 @@ export interface SavedDreamEntry {
 }
 
 export class StorageService {
+  private static repository: DreamRepository = new LocalStorageDreamRepository();
+
   /**
-   * Saves a dream analysis result to localStorage.
+   * Returns the active dream repository instance.
+   */
+  public static getRepository(): DreamRepository {
+    return this.repository;
+  }
+
+  /**
+   * Sets custom repository instance (e.g. for testing or future remote DB).
+   */
+  public static setRepository(repo: DreamRepository): void {
+    this.repository = repo;
+  }
+
+  /**
+   * Converts DreamSubmission + DreamAnalysisResult into a SavedDreamRecord.
+   */
+  public static toSavedDreamRecord(submission: DreamSubmission, analysis: DreamAnalysisResult): SavedDreamRecord {
+    return {
+      dreamId: submission.id,
+      title: submission.title || 'Untitled Nocturnal Experience',
+      originalNarrative: submission.description || '',
+      createdAt: submission.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      emotions: submission.emotions || analysis.extractedFeatures?.detectedEmotions || [],
+      motifs: analysis.extractedFeatures?.dominantMotifs || analysis.extractedFeatures?.detectedSymbols || submission.symbolsAndObjects || [],
+      setting: analysis.extractedFeatures?.setting || (submission.location ? [submission.location] : []),
+      analysisResult: analysis as any,
+      evidenceReferences: analysis.culturalPerspectives?.map(p => p.claim?.source?.sourceTitle || p.claim?.id).filter(Boolean) as string[],
+      researchReferences: analysis.psychologyPerspectives?.map(p => p.psychologyClaim?.conceptName || p.psychologyClaim?.id).filter(Boolean) as string[],
+      personalReflection: analysis.personalInterpretation?.primarySynthesis || (analysis.personalInterpretation as any)?.narrativeArcs?.[0],
+      creativeReflection: analysis.originalReflection?.message,
+      artworkReference: {
+        artworkUrl: analysis.dreamArtwork?.imageUrl,
+        promptUsed: analysis.dreamArtwork?.promptUsed
+      },
+      closingThought: analysis.closingThought?.thought,
+      privacyStatus: submission.privacy === 'anonymous_public' ? 'SHARED_ANONYMOUSLY' : 'PRIVATE',
+      analysisVersion: '1.0.0'
+    };
+  }
+
+  /**
+   * Saves a dream analysis result to the repository.
    */
   public static saveDreamAnalysis(submission: DreamSubmission, analysis: DreamAnalysisResult): void {
-    try {
-      const existing = this.getSavedDreamAnalyses();
-      const entry: SavedDreamEntry = {
-        submission,
-        analysis,
-        savedAt: new Date().toISOString()
-      };
-      // Keep most recent first, max 30 items
-      const updated = [entry, ...existing.filter(e => e.submission.id !== submission.id)].slice(0, 30);
-      localStorage.setItem(SAVED_ANALYSES_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.warn('StorageService.saveDreamAnalysis error:', e);
-    }
+    const record = this.toSavedDreamRecord(submission, analysis);
+    this.repository.saveDream(record);
   }
 
   /**
-   * Retrieves all saved dream analyses.
+   * Retrieves all saved dream records asynchronously.
+   */
+  public static async getSavedDreams(): Promise<SavedDreamRecord[]> {
+    return this.repository.listDreams();
+  }
+
+  /**
+   * Synchronous backwards-compatibility retrieval returning SavedDreamEntry[].
    */
   public static getSavedDreamAnalyses(): SavedDreamEntry[] {
-    try {
-      const raw = localStorage.getItem(SAVED_ANALYSES_KEY) || localStorage.getItem(LEGACY_SAVED_KEY);
-      if (!raw) return [];
-      return JSON.parse(raw);
-    } catch (e) {
-      console.warn('StorageService.getSavedDreamAnalyses error:', e);
-      return [];
+    if (this.repository instanceof LocalStorageDreamRepository) {
+      // LocalStorageDreamRepository maintains an in-memory cache we can read synchronously
+      const localRepo = this.repository as LocalStorageDreamRepository;
+      let records: SavedDreamRecord[] = [];
+      localRepo.listDreams().then(res => { records = res; });
+
+      // Fallback to reading storage directly if empty
+      if (records.length === 0 && typeof localStorage !== 'undefined') {
+        const raw = localStorage.getItem('somnithos_dream_journal_v2');
+        if (raw) {
+          try {
+            records = JSON.parse(raw);
+          } catch {
+            records = [];
+          }
+        }
+      }
+
+      return records.map(r => ({
+        submission: {
+          id: r.dreamId,
+          title: r.title,
+          description: r.originalNarrative,
+          emotions: r.emotions,
+          symbolsAndObjects: r.motifs,
+          location: r.setting?.[0],
+          privacy: r.privacyStatus === 'SHARED_ANONYMOUSLY' ? 'anonymous_public' : 'private',
+          createdAt: r.createdAt
+        },
+        analysis: r.analysisResult as any,
+        savedAt: r.updatedAt || r.createdAt
+      }));
     }
+    return [];
   }
 
   /**
-   * Deletes a saved dream by submission ID.
+   * Deletes a saved dream by submission/dream ID.
    */
   public static deleteSavedDream(submissionId: string): void {
-    try {
-      const existing = this.getSavedDreamAnalyses();
-      const filtered = existing.filter(e => e.submission.id !== submissionId);
-      localStorage.setItem(SAVED_ANALYSES_KEY, JSON.stringify(filtered));
-    } catch (e) {
-      console.warn('StorageService.deleteSavedDream error:', e);
-    }
+    this.repository.deleteDream(submissionId);
+  }
+
+  /**
+   * Updates the privacy status of a saved dream.
+   */
+  public static async updateDreamPrivacy(dreamId: string, privacyStatus: 'PRIVATE' | 'SHARED_ANONYMOUSLY'): Promise<SavedDreamRecord | null> {
+    const dream = await this.repository.getDream(dreamId);
+    if (!dream) return null;
+    const updated: SavedDreamRecord = {
+      ...dream,
+      privacyStatus,
+      updatedAt: new Date().toISOString()
+    };
+    return this.repository.updateDream(updated);
   }
 
   /**
@@ -74,9 +149,9 @@ export class StorageService {
         : submission.description,
       fullDescription: submission.description,
       emotions: submission.emotions || [],
-      symbols: analysis.extractedFeatures.detectedSymbols || [],
-      originalReflection: analysis.originalReflection.message,
-      artworkUrl: analysis.dreamArtwork.imageUrl,
+      symbols: analysis.extractedFeatures?.detectedSymbols || [],
+      originalReflection: analysis.originalReflection?.message || '',
+      artworkUrl: analysis.dreamArtwork?.imageUrl,
       reactions: {
         resonated: 0,
         mystified: 0,
@@ -89,7 +164,9 @@ export class StorageService {
     try {
       const posts = this.getCommunityPosts();
       const updated = [post, ...posts];
-      localStorage.setItem(COMMUNITY_POSTS_KEY, JSON.stringify(updated));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(COMMUNITY_POSTS_KEY, JSON.stringify(updated));
+      }
     } catch (e) {
       console.warn('StorageService.publishToCommunity error:', e);
     }
@@ -102,6 +179,9 @@ export class StorageService {
    */
   public static getCommunityPosts(): CommunityDreamPost[] {
     try {
+      if (typeof localStorage === 'undefined') {
+        return COMMUNITY_DEMO_DREAMS;
+      }
       const raw = localStorage.getItem(COMMUNITY_POSTS_KEY) || localStorage.getItem(LEGACY_COMMUNITY_KEY);
       const userPosts: CommunityDreamPost[] = raw ? JSON.parse(raw) : [];
       // Combine user posts with demo posts
@@ -117,6 +197,9 @@ export class StorageService {
    */
   public static toggleReaction(postId: string, reactionType: 'resonated' | 'mystified' | 'comforted'): { success: boolean; newCount: number } {
     try {
+      if (typeof localStorage === 'undefined') {
+        return { success: false, newCount: 0 };
+      }
       const reactionKey = `${postId}_${reactionType}`;
       const rawReactions = localStorage.getItem(USER_REACTIONS_KEY) || localStorage.getItem(LEGACY_REACTIONS_KEY);
       const reactedSet: Record<string, boolean> = rawReactions ? JSON.parse(rawReactions) : {};
@@ -153,11 +236,12 @@ export class StorageService {
    */
   public static hasUserReacted(postId: string, reactionType: 'resonated' | 'mystified' | 'comforted'): boolean {
     try {
+      if (typeof localStorage === 'undefined') return false;
       const raw = localStorage.getItem(USER_REACTIONS_KEY) || localStorage.getItem(LEGACY_REACTIONS_KEY);
       if (!raw) return false;
       const reactedSet: Record<string, boolean> = JSON.parse(raw);
       return !!reactedSet[`${postId}_${reactionType}`];
-    } catch (e) {
+    } catch {
       return false;
     }
   }

@@ -1,76 +1,38 @@
-export type EvidenceLevel = 'HIGH' | 'MODERATE' | 'HISTORICAL' | 'TRADITIONAL' | 'UNCERTAIN';
+import type { EvidenceLevel as DomainEvidenceLevel } from '../domain/evidence/EvidenceLevel';
+import type { EvidenceRecord, VerifiedSourceRecord as DomainVerifiedSourceRecord, SourceType as DomainSourceType, EpistemicCategory as DomainEpistemicCategory, VerificationStatus as DomainVerificationStatus, EvidenceRecordMatch } from '../domain/evidence/EvidenceRecord';
+import type { ResearchRecord, ResearchRecordMatch } from '../domain/research/ResearchRecord';
+import type { DreamInput as DomainDreamInput } from '../domain/dream/DreamInput';
+import type { DreamFeatures as DomainDreamFeatures } from '../domain/dream/DreamFeatures';
+import type { PersonalReflection as DomainPersonalReflection } from '../domain/analysis/PersonalReflection';
+import type { CreativeReflection as DomainCreativeReflection } from '../domain/analysis/CreativeReflection';
+import type { ArtworkPrompt as DomainArtworkPrompt } from '../domain/analysis/ArtworkPrompt';
+import type { ClosingThought as DomainClosingThought } from '../domain/analysis/ClosingThought';
 
-export type SourceType =
-  | 'primary_source'
-  | 'peer_reviewed_journal'
-  | 'academic_book'
-  | 'university_archive'
-  | 'museum_manuscript'
-  | 'scholarly_edition'
-  | 'critical_commentary';
+import type { SourceTier as DomainSourceTier } from '../domain/evidence/SourceTier';
+import type { ClaimRecord as DomainClaimRecord, SupportStatus as DomainSupportStatus, ClaimType as DomainClaimType } from '../domain/evidence/ClaimRecord';
+import type { ProvenanceChain as DomainProvenanceChain, ProvenanceNode as DomainProvenanceNode } from '../domain/evidence/Provenance';
 
-export type EpistemicCategory =
-  | 'primary_religious_text'
-  | 'later_scholarly_commentary'
-  | 'historical_oneiromancy'
-  | 'folk_tradition'
-  | 'empirical_neuroscience_finding'
-  | 'cognitive_psychological_model'
-  | 'historical_psychoanalytic_theory'
-  | 'speculative_interpretation';
-
-export type VerificationStatus =
-  | 'VERIFIED_PRIMARY'
-  | 'VERIFIED_PEER_REVIEWED'
-  | 'VERIFIED_SCHOLARLY_TRANSLATION'
-  | 'HISTORICALLY_DOCUMENTED_BELIEF'
-  | 'ATTRIBUTION_DEBATED';
-
-export interface VerifiedSourceRecord {
-  id: string;
-  sourceTitle: string;
-  authorOrCreator: string;
-  institutionOrPublisher: string;
-  publicationDate: string; // e.g. "c. 1275 BCE", "1977", "2000"
-  identifierOrUrl: string; // DOI, Museum Accession No (e.g. BM EA 10683), or canonical academic URL
-  pageChapterSection?: string;
-  supportingPassage: string; // Exact translated excerpt or documented summary
-  sourceType: SourceType;
-  lastVerifiedDate: string;
-  verificationNotes: string;
-}
-
-export interface FactualKnowledgeClaim {
-  id: string;
-  claim: string;
-  exactTradition: string; // Narrowest context, e.g. "Ramesside New Kingdom Scribal Oneirology"
-  communityOrSchool: string; // e.g. "Deir el-Medina scribal community"
-  geographicContext: string; // e.g. "Thebes, Upper Egypt"
-  historicalPeriod: string; // e.g. "19th Dynasty, c. 1275 BCE"
-  epistemicCategory: EpistemicCategory;
-  evidenceLevel: EvidenceLevel;
-  verificationStatus: VerificationStatus;
-  primarySubject: string; // Symbol or psychological theme (e.g., "water", "falling", "flying", "snake", "teeth")
-  secondaryKeywords: string[];
-  source: VerifiedSourceRecord;
-  whatIsUncertain: string;
-  isSymbolMeaningUniversal: boolean; // Almost always false - dream symbols are culturally & personally contingent
-}
-
-export interface PsychologyTheoryClaim {
-  id: string;
-  conceptName: string;
-  researchers: string;
-  originalPublication: string;
-  publicationYear: string;
-  epistemicType: 'empirical_finding' | 'theoretical_model' | 'historical_framework' | 'disputed_hypothesis';
-  evidenceLevel: EvidenceLevel;
-  summary: string;
-  relevanceToDreamThemes: string[];
-  documentedLimitations: string;
-  source: VerifiedSourceRecord;
-  nonDiagnosticDisclaimer: string;
-}
+export type SourceTier = DomainSourceTier;
+export type ClaimRecord = DomainClaimRecord;
+export type SupportStatus = DomainSupportStatus;
+export type ClaimType = DomainClaimType;
+export type ProvenanceChain = DomainProvenanceChain;
+export type ProvenanceNode = DomainProvenanceNode;
+export type EvidenceLevel = DomainEvidenceLevel;
+export type SourceType = DomainSourceType;
+export type EpistemicCategory = DomainEpistemicCategory;
+export type VerificationStatus = DomainVerificationStatus;
+export type VerifiedSourceRecord = DomainVerifiedSourceRecord;
+export type FactualKnowledgeClaim = EvidenceRecord;
+export type PsychologyTheoryClaim = ResearchRecord;
+export type CulturalPerspectiveMatch = EvidenceRecordMatch;
+export type PsychologyPerspectiveMatch = ResearchRecordMatch;
+export type CreativeReflection = DomainCreativeReflection;
+export type ArtworkPrompt = DomainArtworkPrompt;
+export type PersonalReflection = DomainPersonalReflection;
+export type ClosingThought = DomainClosingThought;
+export type DreamInput = DomainDreamInput;
+export type DreamFeatures = DomainDreamFeatures;
 
 export interface VerifiedQuote {
   id: string;
@@ -86,65 +48,54 @@ export interface VerifiedQuote {
   historicalContext: string;
 }
 
-export interface DreamSubmission {
+export type DreamSubmission = DomainDreamInput & {
   id: string;
-  title?: string;
   description: string;
   emotions: string[];
-  importantPeople?: string;
-  animals?: string[];
   symbolsAndObjects: string[];
-  location?: string;
-  colors?: string[];
-  beforeDream?: string;
-  afterWaking?: string;
-  userInterpretation?: string;
-  culturalBackground?: string;
   privacy: 'private' | 'anonymous_public';
   createdAt: string;
-}
+};
 
-export interface ExtractedDreamFeatures {
-  detectedSymbols: string[];
-  detectedEmotions: string[];
-  detectedColors: string[];
-  detectedLocations: string[];
-  detectedThemes: string[];
-  ambiguityLevel: 'low' | 'moderate' | 'high';
-  daytimeResidueProbability: 'low' | 'moderate' | 'high';
-}
-
-export interface CulturalPerspectiveMatch {
-  claim: FactualKnowledgeClaim;
-  relevanceReason: string;
-  traditionLabel: string;
-}
-
-export interface PsychologyPerspectiveMatch {
-  psychologyClaim: PsychologyTheoryClaim;
-  relevanceReason: string;
-}
+export type ExtractedDreamFeatures = DomainDreamFeatures;
 
 export interface DreamAnalysisResult {
   id: string;
   submissionId: string;
   createdAt: string;
+  input?: DomainDreamInput;
   extractedFeatures: ExtractedDreamFeatures;
-  culturalPerspectives: CulturalPerspectiveMatch[];
+  historicalEvidence?: EvidenceRecordMatch[];
+  culturalPerspectives: EvidenceRecordMatch[];
   culturalPerspectivesNotFound: boolean;
-  psychologyPerspectives: PsychologyPerspectiveMatch[];
+  scientificResearch?: ResearchRecordMatch[];
+  psychologyPerspectives: ResearchRecordMatch[];
+  evidenceGaps?: {
+    ungroundedMotifs: string[];
+    hasUngroundedMotifs: boolean;
+    fallbackMessage: string;
+  };
+  personalReflection?: DomainPersonalReflection;
   personalInterpretation: {
     title: string;
     narrativeArcs: string[];
     symbolicEchoes: string[];
     suggestiveQuestions: string[];
+    possibleInterpretations?: string[];
+    emotionalReading?: string;
+    uncertaintyStatement?: string;
   };
   originalReflection: {
     message: string;
     label: string; // "Original reflection inspired by your dream"
     isAIGenerated: true;
+    poeticReflection?: string;
+    metaphor?: string;
   };
+  closingThought?: DomainClosingThought;
   verifiedQuoteMatch?: VerifiedQuote;
+  artworkPrompt?: DomainArtworkPrompt;
+  claims?: DomainClaimRecord[];
   dreamArtwork: {
     imageUrl: string;
     promptUsed: string;
@@ -154,6 +105,7 @@ export interface DreamAnalysisResult {
     subLabel: string; // "An artistic visualization inspired by your description."
     visualKeywords: string[];
   };
+  methodologyNotes?: string;
 }
 
 export interface DreamSymbolItem {
@@ -161,8 +113,8 @@ export interface DreamSymbolItem {
   symbol: string;
   category: 'nature' | 'movement' | 'body' | 'objects' | 'places' | 'creatures';
   summaryDescription: string;
-  documentedCulturalInterpretations: FactualKnowledgeClaim[];
-  psychologicalPerspectives: PsychologyTheoryClaim[];
+  documentedCulturalInterpretations: EvidenceRecord[];
+  psychologicalPerspectives: ResearchRecord[];
   uncertaintiesAndContingencies: string;
   relatedSymbols: string[];
 }

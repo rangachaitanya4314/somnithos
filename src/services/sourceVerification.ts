@@ -31,7 +31,7 @@ export class SourceVerificationService {
       const subject = claim.primarySubject.toLowerCase().trim();
       const subjectMatch = normalizedKeywords.has(subject);
 
-      const secondaryMatch = claim.secondaryKeywords.some(sec => {
+      const secondaryMatch = claim.secondaryKeywords?.some(sec => {
         const secNorm = sec.toLowerCase().trim();
         return normalizedKeywords.has(secNorm);
       });
@@ -39,6 +39,7 @@ export class SourceVerificationService {
       if (subjectMatch || secondaryMatch) {
         matches.push({
           claim,
+          evidenceRecord: claim,
           relevanceReason: `Matched verified record for "${claim.primarySubject}" in ${claim.exactTradition} (${claim.historicalPeriod}).`,
           traditionLabel: `${claim.exactTradition} • ${claim.geographicContext}`
         });
@@ -63,6 +64,7 @@ export class SourceVerificationService {
       if (isRelevant) {
         matches.push({
           psychologyClaim: psyClaim,
+          researchRecord: psyClaim,
           relevanceReason: `Relevant to detected dream themes (${psyClaim.relevanceToDreamThemes.slice(0, 3).join(', ')}) through ${psyClaim.conceptName}.`
         });
       }
@@ -74,6 +76,7 @@ export class SourceVerificationService {
       if (continuityClaim) {
         matches.push({
           psychologyClaim: continuityClaim,
+          researchRecord: continuityClaim,
           relevanceReason: 'Baseline cognitive framework analyzing continuity between waking thoughts and dream imagery.'
         });
       }

@@ -93,36 +93,47 @@ export class GeminiDreamAnalysisProvider implements DreamAnalysisProvider {
       return validation.sanitizedResult;
     }
 
+    const targetLang = input.language || input.targetLanguage || 'en';
+    const langNames: Record<string, string> = {
+      en: 'English (simple, everyday English)',
+      te: 'Telugu (తెలుగు - natural, conversational Telugu, not overly formal or academic)',
+      ta: 'Tamil (தமிழ் - natural, conversational Tamil, not overly formal or academic)',
+      hi: 'Hindi (हिन्दी - natural, conversational Hindi, not overly formal or academic)'
+    };
+
     // 3. Prepare Structured Gemini Synthesis Prompt
     const systemInstruction = `You are the synthesis engine for Somnithos, an evidence-first dream exploration platform.
 Your task is to synthesize a simple, personal, and calm dream exploration experience based on the user's dream narrative.
 
+TARGET LANGUAGE: ${langNames[targetLang] || 'English'}
+IMPORTANT: Write all user-facing text (meaningfulHighlights text, emotionalJourney, simpleReflection, personalReflection, suggestiveQuestions, astrology reading) naturally in ${langNames[targetLang] || 'English'}. Keep the tone natural, conversational, and gentle.
+
 CORE PRINCIPLE: "Simple on the surface. Powerful underneath."
 
 STRICT RULES:
-1. SIMPLE ENGLISH REQUIREMENT:
-   Use clear, everyday English. An average English speaker should understand the result immediately.
-   NEVER use unnecessary academic or psychological jargon such as "neurochemical recalibration", "affect regulation", "cognitive schemas", "epistemic traditions", "autobiographical memory trace", "phenomenological", or "associative recombination".
+1. NATURAL EVERYDAY LANGUAGE:
+   Use clear, everyday language in the requested target language. An average speaker should understand the result immediately.
+   NEVER use unnecessary academic or psychological jargon.
 2. MEANINGFUL NARRATIVE HIGHLIGHTS (3–5 items):
    Do NOT simply extract isolated nouns (like "water", "forest").
    Understand the story, actions, relationships, and emotional changes (e.g. fear → warm light → calm, or purple train with huge blue fish under the ocean, or searching for a classroom and finding a friend).
-   Format 3–5 items with a relevant emoji for each.
+   Format 3–5 items with a relevant emoji for each in the target language.
 3. EMOTIONAL JOURNEY:
-   Explicitly identify the emotional trajectory (e.g. "Fear → Warm Light → Calm", "Nervousness → Relief").
-4. ONE SIMPLE REFLECTION:
-   Provide ONE simple, thoughtful reflection under "simpleReflection".
+   Explicitly identify the emotional trajectory in the target language (e.g. "Fear → Warm Light → Calm", "Nervousness → Relief").
+4. ONE SIMPLE REFLECTION (3–4 Short Lines):
+   Provide ONE gentle, thoughtful reflection of exactly 3–4 short lines under "simpleReflection".
    Use non-diagnostic, exploratory language (e.g. "One possible way to look at it...", "It may reflect...", "It could be connected to...", "You might relate this to...").
    Never diagnose or claim certainty.
 5. ABSOLUTELY NO FRIGHTENING PREDICTIONS:
    NEVER say or imply that a dream predicts death, dying, someone's death, serious illness, disease, disaster, tragedy, physical harm, or future catastrophe.
 6. ARTWORK PROMPT:
-   Must visually represent the ACTUAL dream (specific objects, locations, actions, characters, emotional mood, distinct colors). If the user mentions a "purple train", specify a purple train. If they mention "huge blue fish", include huge blue fish. If they mention "old school", specify an old school.
+   Must visually represent the ACTUAL dream (specific objects, locations, actions, characters, emotional mood, distinct colors) in English for image generation stability.
 7. EVIDENCE ENGINE AS GROUND TRUTH:
    Never invent historical citations, traditions, or scientific studies. Only reference the provided context. If no evidence matches, do not fabricate claims.
 8. RETURN ONLY VALID JSON:
    Return valid JSON with:
    - extractedFeatures: { meaningfulHighlights: [{emoji, text}], emotionalJourney, dominantMotifs, emotionalSignals, setting, detectedColors, movementPatterns }
-   - simpleReflection: string
+   - simpleReflection: string (3-4 short lines in ${targetLang})
    - personalReflection: { title, possibleInterpretations, primarySynthesis, suggestiveQuestions, uncertaintyStatement }
    - creativeReflection: { message, label, isAIGenerated: true, poeticReflection, metaphor }
    - artworkPrompt: { promptUsed, title, styleTheme, visualKeywords }
@@ -130,6 +141,7 @@ STRICT RULES:
    - astrologyReading: { element, planetaryTheme, reading, disclaimer }`;
 
     const userPrompt = JSON.stringify({
+      targetLanguage: targetLang,
       dreamNarrative: input.narrative,
       dreamTitle: input.title || '',
       extractedFeatures: {

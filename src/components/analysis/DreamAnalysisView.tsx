@@ -12,6 +12,7 @@ import { ART_PRESETS } from '../../services/dreamArtGenerator';
 import { ImageGenerationService } from '../../services/imageGenerationService';
 import type { ImageProviderType } from '../../services/imageGenerationService';
 import { StorageService } from '../../services/storageService';
+import { useI18n } from '../../services/i18n/I18nContext';
 import {
   Sparkles,
   ShieldCheck,
@@ -31,7 +32,6 @@ import {
   X,
   Calendar,
   Clock,
-  MapPin,
   BookOpen,
   ArrowRight,
   Users
@@ -55,6 +55,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
   onNewDream,
   onViewCommunity
 }) => {
+  const { t } = useI18n();
   const [currentStage, setCurrentStage] = useState<StageNumber>(1);
   const [unlockedStage, setUnlockedStage] = useState<StageNumber>(1);
   const [exploreModal, setExploreModal] = useState<ExploreCategory>(null);
@@ -72,7 +73,6 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
   // Astrology form inputs
   const [birthDate, setBirthDate] = useState<string>('');
   const [birthTime, setBirthTime] = useState<string>('');
-  const [birthPlace, setBirthPlace] = useState<string>('');
   const [astrologyResult, setAstrologyResult] = useState<{
     element: string;
     signEstimate?: string;
@@ -82,15 +82,15 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Natural reveal progression (0s -> ~2s -> ~4s)
+  // Natural reveal progression (0s -> ~1.5s -> ~3s)
   useEffect(() => {
     const timer1 = setTimeout(() => {
       setUnlockedStage(prev => (prev < 2 ? 2 : prev));
-    }, 1600);
+    }, 1500);
 
     const timer2 = setTimeout(() => {
       setUnlockedStage(prev => (prev < 3 ? 3 : prev));
-    }, 3200);
+    }, 3000);
 
     return () => {
       clearTimeout(timer1);
@@ -240,17 +240,17 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
     });
   };
 
-  const stageTitles: Record<StageNumber, string> = {
-    1: 'YOUR DREAM',
-    2: 'WHAT STOOD OUT',
-    3: 'ONE POSSIBLE WAY TO LOOK AT IT',
-    4: 'YOUR DREAM — IMAGINED'
+  const desktopStepLabels: Record<StageNumber, string> = {
+    1: t.steps.step1,
+    2: t.steps.step2,
+    3: t.steps.step3,
+    4: t.steps.step4
   };
 
   const highlights = analysis.extractedFeatures.meaningfulHighlights || [
-    { emoji: '🌌', text: 'You were navigating a distinctive nocturnal setting.' },
-    { emoji: '💭', text: `You experienced emotions of ${analysis.extractedFeatures.emotionalSignals.join(' and ') || 'reflection'}.` },
-    { emoji: '🕊️', text: 'Your mind moved through a meaningful transition.' }
+    { emoji: '🌲', text: 'You were navigating a distinctive nocturnal setting' },
+    { emoji: '💭', text: `You experienced emotions of ${analysis.extractedFeatures.emotionalSignals.join(' and ') || 'reflection'}` },
+    { emoji: '🕊️', text: 'Your mind moved through a meaningful transition' }
   ];
 
   const emotionalJourney = analysis.extractedFeatures.emotionalJourney || 
@@ -258,9 +258,15 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
       ? analysis.extractedFeatures.emotionalSignals.join(' → ') 
       : 'Observation → Quiet Awareness');
 
-  const simpleReflection = analysis.simpleReflection || 
+  // Split reflection into 3-4 distinct short lines
+  const rawReflection = analysis.simpleReflection || 
     analysis.personalReflection?.primarySynthesis || 
-    'One possible way to look at it is that your mind is organizing everyday experiences and feelings in a calm, reflective space.';
+    'One possible way to look at it is that your mind may be organizing everyday feelings and experiences.\nYou might be balancing what feels unfamiliar with what brings you comfort.\nThis could reflect a gentle effort to find your footing during a time of change.\nYou may think about what helps you feel most steady and at ease.';
+
+  const reflectionLines = rawReflection
+    .split('\n')
+    .map(line => line.trim())
+    .filter(Boolean);
 
   const descriptionText = submission.description || '';
   const isLongDescription = descriptionText.length > 280;
@@ -275,7 +281,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
         <div className="guided-header-top">
           <div className="somnithos-pill">
             <Sparkles size={14} className="text-gold" />
-            <span>SOMNITHOS GUIDED EXPERIENCE</span>
+            <span>{t.common.somnithosPill}</span>
           </div>
 
           <div className="guided-header-actions">
@@ -285,66 +291,84 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
               title="Inspect system provenance and dataset verification audit"
             >
               <FileCheck size={14} className="text-gold" />
-              <span>Audit & Provenance</span>
+              <span>{t.common.auditProvenance}</span>
             </button>
 
             <button className="btn btn-ghost btn-sm" onClick={onViewCommunity}>
               <Users size={14} />
-              <span>Community</span>
+              <span className="hide-mobile">{t.common.community}</span>
             </button>
 
             <button className="btn btn-ghost btn-sm" onClick={onNewDream}>
               <RefreshCw size={14} />
-              <span>New Dream</span>
+              <span>{t.common.newDream}</span>
             </button>
           </div>
         </div>
 
-        {/* Guided Stage Tracker */}
-        <div className="guided-stage-nav" role="navigation" aria-label="Dream Exploration Stages">
-          <button
-            className="stage-nav-arrow"
-            onClick={() => setCurrentStage(prev => (Math.max(1, prev - 1) as StageNumber))}
-            disabled={currentStage === 1}
-            aria-label="Previous stage"
-          >
-            <ChevronLeft size={18} />
-            <span className="hide-mobile">Back</span>
-          </button>
-
-          <div className="stage-dots-container">
-            {([1, 2, 3, 4] as StageNumber[]).map(s => {
-              const isCurrent = currentStage === s;
-              const isAvailable = s <= unlockedStage;
-              return (
+        {/* ========================================================================= */}
+        {/* DESKTOP STEPPER NAVIGATION (1 Your Dream → 2 What Stood Out → 3 One Possible Way → 4 Dream Imagined) */}
+        {/* ========================================================================= */}
+        <nav className="desktop-stepper-track" aria-label="Dream Exploration Steps">
+          {([1, 2, 3, 4] as StageNumber[]).map((s, idx) => {
+            const isCurrent = currentStage === s;
+            const isAvailable = s <= unlockedStage;
+            return (
+              <React.Fragment key={s}>
                 <button
-                  key={s}
-                  className={`stage-dot-btn ${isCurrent ? 'active' : ''} ${isAvailable ? 'available' : 'locked'}`}
+                  className={`desktop-step-btn ${isCurrent ? 'active' : ''} ${isAvailable ? 'available' : 'locked'}`}
                   onClick={() => setCurrentStage(s)}
-                  aria-label={`Go to Stage ${s}: ${stageTitles[s]}`}
+                  aria-label={`Go to Step ${desktopStepLabels[s]}`}
                 >
-                  <span className="stage-dot-number">{s}</span>
-                  <span className="stage-dot-label hide-mobile">{stageTitles[s]}</span>
+                  <span className="step-btn-badge">{s}</span>
+                  <span className="step-btn-title">{desktopStepLabels[s].replace(/^\d+\s*/, '')}</span>
                 </button>
-              );
-            })}
+                {idx < 3 && <span className="desktop-step-arrow" aria-hidden="true">→</span>}
+              </React.Fragment>
+            );
+          })}
+        </nav>
+
+        {/* ========================================================================= */}
+        {/* MOBILE STEP NAVIGATION (Compact STEP X OF 4 with Progress Bar) */}
+        {/* ========================================================================= */}
+        <div className="mobile-stepper-bar">
+          <div className="mobile-stepper-header">
+            <button
+              className="mobile-nav-btn"
+              onClick={() => setCurrentStage(prev => (Math.max(1, prev - 1) as StageNumber))}
+              disabled={currentStage === 1}
+              aria-label="Previous step"
+            >
+              <ChevronLeft size={16} />
+              <span>{t.common.back}</span>
+            </button>
+
+            <div className="mobile-step-counter">
+              <span className="mobile-step-tag">{t.steps.stepPrefix} {currentStage} {t.steps.stepOf} 4</span>
+              <span className="mobile-current-title">{desktopStepLabels[currentStage].replace(/^\d+\s*/, '')}</span>
+            </div>
+
+            <button
+              className="mobile-nav-btn"
+              onClick={() => setCurrentStage(prev => (Math.min(4, prev + 1) as StageNumber))}
+              disabled={currentStage === 4}
+              aria-label="Next step"
+            >
+              <span>{t.common.next}</span>
+              <ChevronRight size={16} />
+            </button>
           </div>
 
-          <button
-            className="stage-nav-arrow"
-            onClick={() => setCurrentStage(prev => (Math.min(4, prev + 1) as StageNumber))}
-            disabled={currentStage === 4}
-            aria-label="Next stage"
-          >
-            <span className="hide-mobile">Next</span>
-            <ChevronRight size={18} />
-          </button>
-        </div>
-
-        {/* Stage Title Sub-indicator */}
-        <div className="stage-status-indicator">
-          <span className="stage-counter-badge">{currentStage} of 4</span>
-          <h2 className="current-stage-title">{stageTitles[currentStage]}</h2>
+          <div className="mobile-progress-track">
+            {([1, 2, 3, 4] as StageNumber[]).map(s => (
+              <div
+                key={s}
+                className={`mobile-progress-segment ${s <= currentStage ? 'filled' : ''} ${s === currentStage ? 'current' : ''}`}
+                onClick={() => setCurrentStage(s)}
+              />
+            ))}
+          </div>
         </div>
       </header>
 
@@ -354,9 +378,14 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
         {/* STAGE 1: YOUR DREAM */}
         {/* ========================================================================= */}
         {currentStage === 1 && (
-          <section className="stage-view stage-fade-in" aria-label="Stage 1: Your Dream">
+          <section className="stage-view stage-fade-in" aria-label="Step 1: Your Dream">
+            <div className="stage-eyebrow">
+              <Sparkles size={14} className="text-gold" />
+              <span>{t.stage1.eyebrow}</span>
+            </div>
+
             <h1 className="dream-hero-title">
-              {submission.title || 'Your Nocturnal Dream'}
+              {submission.title || t.stage1.defaultTitle}
             </h1>
 
             <div className="dream-wording-vitrine">
@@ -373,12 +402,12 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                   {isNarrativeExpanded ? (
                     <>
                       <ChevronUp size={14} />
-                      <span>Show less</span>
+                      <span>{t.stage1.showLess}</span>
                     </>
                   ) : (
                     <>
                       <ChevronDown size={14} />
-                      <span>Show full dream</span>
+                      <span>{t.stage1.showFull}</span>
                     </>
                   )}
                 </button>
@@ -388,14 +417,14 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
             <div className="stage-actions-footer">
               <div className="reveal-hint-text">
                 <Sparkles size={14} className="text-gold" />
-                <span>We noticed the meaningful story behind your words.</span>
+                <span>{t.stage1.observedHint}</span>
               </div>
 
               <button
                 className="btn btn-primary btn-lg"
                 onClick={() => setCurrentStage(2)}
               >
-                <span>See What Stood Out</span>
+                <span>{t.stage1.nextButton}</span>
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -406,26 +435,16 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
         {/* STAGE 2: WHAT STOOD OUT */}
         {/* ========================================================================= */}
         {currentStage === 2 && (
-          <section className="stage-view stage-fade-in" aria-label="Stage 2: What Stood Out">
+          <section className="stage-view stage-fade-in" aria-label="Step 2: What Stood Out">
             <div className="stage-eyebrow">
               <Sparkles size={14} className="text-gold" />
-              <span>NARRATIVE & EMOTIONAL OBSERVATIONS</span>
+              <span>{t.stage2.eyebrow}</span>
             </div>
 
-            <h2 className="stage-heading">What Stood Out in Your Dream</h2>
+            <h2 className="stage-heading">{t.stage2.heading}</h2>
             <p className="stage-lead-p">
-              Rather than generic labels, here are the meaningful moments, unusual details, and emotional changes we noticed:
+              {t.stage2.lead}
             </p>
-
-            {/* Emotional Arc Badge */}
-            {emotionalJourney && (
-              <div className="emotional-arc-card">
-                <span className="emotional-arc-label">Emotional Shift</span>
-                <div className="emotional-arc-pill">
-                  <span className="arc-path">{emotionalJourney}</span>
-                </div>
-              </div>
-            )}
 
             {/* 3-5 Meaningful Highlight Cards */}
             <div className="highlights-list-grid">
@@ -437,20 +456,30 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
               ))}
             </div>
 
+            {/* Emotional Shift Badge */}
+            {emotionalJourney && (
+              <div className="emotional-arc-card">
+                <span className="emotional-arc-label">{t.stage2.emotionalShift}</span>
+                <div className="emotional-arc-pill">
+                  <span className="arc-path">{emotionalJourney}</span>
+                </div>
+              </div>
+            )}
+
             <div className="stage-actions-footer">
               <button
                 className="btn btn-secondary"
                 onClick={() => setCurrentStage(1)}
               >
                 <ChevronLeft size={16} />
-                <span>Back</span>
+                <span>{t.common.back}</span>
               </button>
 
               <button
                 className="btn btn-primary btn-lg"
                 onClick={() => setCurrentStage(3)}
               >
-                <span>How to Look at It</span>
+                <span>{t.stage2.nextButton}</span>
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -461,25 +490,30 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
         {/* STAGE 3: ONE POSSIBLE WAY TO LOOK AT IT */}
         {/* ========================================================================= */}
         {currentStage === 3 && (
-          <section className="stage-view stage-fade-in" aria-label="Stage 3: One Possible Way to Look at It">
+          <section className="stage-view stage-fade-in" aria-label="Step 3: One Possible Way to Look at It">
             <div className="stage-eyebrow">
               <Compass size={14} className="text-gold" />
-              <span>CALM & EXPLORATORY REFLECTION</span>
+              <span>{t.stage3.eyebrow}</span>
             </div>
 
-            <h2 className="stage-heading">One Possible Way to Look at It</h2>
+            <h2 className="stage-heading">{t.stage3.heading}</h2>
             <p className="stage-lead-p">
-              Every dream belongs only to you. Here is one simple way to reflect on it without dogmatic claims or diagnoses:
+              {t.stage3.lead}
             </p>
 
             <div className="single-reflection-card">
-              <p className="primary-reflection-text">
-                &ldquo;{simpleReflection}&rdquo;
-              </p>
+              {/* 3-4 Short Lines */}
+              <div className="reflection-lines-container">
+                {reflectionLines.map((line, idx) => (
+                  <p key={idx} className="primary-reflection-line">
+                    {line}
+                  </p>
+                ))}
+              </div>
 
               {analysis.personalReflection?.suggestiveQuestions?.[0] && (
                 <div className="reflection-question-box">
-                  <span className="question-intro">A quiet question to consider:</span>
+                  <span className="question-intro">{t.stage3.questionIntro}</span>
                   <p className="question-content">
                     {analysis.personalReflection.suggestiveQuestions[0]}
                   </p>
@@ -488,7 +522,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
 
               <div className="reflection-disclaimer-note">
                 <ShieldCheck size={14} className="text-emerald" />
-                <span>Non-diagnostic reflection intended for personal introspection.</span>
+                <span>{t.stage3.disclaimer}</span>
               </div>
             </div>
 
@@ -498,14 +532,14 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                 onClick={() => setCurrentStage(2)}
               >
                 <ChevronLeft size={16} />
-                <span>Back</span>
+                <span>{t.common.back}</span>
               </button>
 
               <button
                 className="btn btn-primary btn-lg"
                 onClick={() => setCurrentStage(4)}
               >
-                <span>See Your Dream Imagined</span>
+                <span>{t.stage3.nextButton}</span>
                 <ArrowRight size={18} />
               </button>
             </div>
@@ -516,15 +550,15 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
         {/* STAGE 4: YOUR DREAM — IMAGINED & EXPLORE MORE */}
         {/* ========================================================================= */}
         {currentStage === 4 && (
-          <section className="stage-view stage-fade-in" aria-label="Stage 4: Your Dream Imagined">
+          <section className="stage-view stage-fade-in" aria-label="Step 4: Your Dream Imagined">
             <div className="stage-eyebrow">
               <Palette size={14} className="text-gold" />
-              <span>FAITHFUL ARTISTIC VISUALIZATION</span>
+              <span>{t.stage4.eyebrow}</span>
             </div>
 
-            <h2 className="stage-heading">Your Dream — Imagined</h2>
+            <h2 className="stage-heading">{t.stage4.heading}</h2>
             <p className="stage-lead-p">
-              An artwork synthesized specifically from your description, preserving your objects, mood, and colors:
+              {t.stage4.lead}
             </p>
 
             {/* Dream Artwork Vitrine */}
@@ -539,7 +573,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                 ) : (
                   <div className="artwork-loading-placeholder">
                     <Sparkles size={28} className="spinner text-gold" />
-                    <span>Painting your dream...</span>
+                    <span>{t.stage4.paintingPlaceholder}</span>
                   </div>
                 )}
                 {/* Hidden canvas for procedural generation fallback */}
@@ -550,7 +584,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
               <div className="artwork-toolbar-row">
                 <div className="style-preset-selector">
                   <Palette size={14} className="text-gold" />
-                  <span className="preset-label">Theme:</span>
+                  <span className="preset-label">{t.common.theme}</span>
                   <select
                     className="style-dropdown"
                     value={currentStylePreset}
@@ -568,10 +602,10 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     className="btn btn-secondary btn-sm"
                     onClick={handleRegenerateArtwork}
                     disabled={isGeneratingArt}
-                    title="Vary the artistic composition"
+                    title="Vary the artistic composition while keeping your dream objects"
                   >
                     <RefreshCw size={14} className={isGeneratingArt ? 'spinner' : ''} />
-                    <span>Regenerate</span>
+                    <span>{t.common.regenerate}</span>
                   </button>
 
                   <button
@@ -581,7 +615,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     title="Download high-resolution image"
                   >
                     <Download size={14} />
-                    <span>Download</span>
+                    <span>{t.common.download}</span>
                   </button>
 
                   <button
@@ -590,7 +624,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     disabled={isSaved}
                   >
                     <Bookmark size={14} />
-                    <span>{isSaved ? 'Saved' : 'Save Dream'}</span>
+                    <span>{isSaved ? t.common.saved : t.common.save}</span>
                   </button>
 
                   {submission.privacy === 'anonymous_public' && (
@@ -600,30 +634,30 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                       disabled={isPublished}
                     >
                       <Share2 size={14} />
-                      <span>{isPublished ? 'Shared' : 'Share'}</span>
+                      <span>{isPublished ? t.common.shared : t.common.share}</span>
                     </button>
                   )}
                 </div>
               </div>
 
               <div className="artwork-epistemic-disclaimer">
-                <span>Your Dream — Imagined · An artistic visualization inspired by your description. Not scientific evidence.</span>
+                <span>{t.stage4.disclaimer}</span>
               </div>
             </div>
 
             {/* ========================================================================= */}
-            {/* EXPLORE MORE (Optional Choices Hub) */}
+            {/* EXPLORE MORE IF YOU WISH (Optional Choices Hub) */}
             {/* ========================================================================= */}
             <div className="explore-more-container">
               <div className="explore-more-header">
-                <h3 className="explore-more-title">Explore More If You Wish</h3>
+                <h3 className="explore-more-title">{t.exploreMore.title}</h3>
                 <p className="explore-more-desc">
-                  Choose what you are curious about. Research and traditional perspectives are always optional.
+                  {t.exploreMore.subtitle}
                 </p>
               </div>
 
               <div className="explore-choices-grid">
-                {/* 1. Research */}
+                {/* 1. Sleep & Mind */}
                 <button
                   className="explore-choice-card"
                   onClick={() => setExploreModal('research')}
@@ -632,8 +666,8 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     <Brain size={22} className="text-cyan" />
                   </div>
                   <div className="choice-text-wrap">
-                    <h4 className="choice-title">🔬 Sleep & Mind Research</h4>
-                    <p className="choice-desc">How science explains REM sleep, emotion processing, and memory sorting.</p>
+                    <h4 className="choice-title">{t.exploreMore.researchTitle}</h4>
+                    <p className="choice-desc">{t.exploreMore.researchDesc}</p>
                   </div>
                   <ChevronRight size={18} className="choice-arrow text-cyan" />
                 </button>
@@ -647,13 +681,13 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     <BookOpen size={22} className="text-gold" />
                   </div>
                   <div className="choice-text-wrap">
-                    <h4 className="choice-title">🏺 Old Dream Beliefs</h4>
-                    <p className="choice-desc">Historical records from antiquity, manuscripts, and cultural traditions.</p>
+                    <h4 className="choice-title">{t.exploreMore.beliefsTitle}</h4>
+                    <p className="choice-desc">{t.exploreMore.beliefsDesc}</p>
                   </div>
                   <ChevronRight size={18} className="choice-arrow text-gold" />
                 </button>
 
-                {/* 3. Astrology */}
+                {/* 3. Astrology (Optional) */}
                 <button
                   className="explore-choice-card"
                   onClick={() => setExploreModal('astrology')}
@@ -662,8 +696,8 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     <Sparkles size={22} className="text-purple" />
                   </div>
                   <div className="choice-text-wrap">
-                    <h4 className="choice-title">✨ Astrology (Optional)</h4>
-                    <p className="choice-desc">Traditional astrological element & planetary correspondences (non-scientific).</p>
+                    <h4 className="choice-title">{t.exploreMore.astrologyTitle}</h4>
+                    <p className="choice-desc">{t.exploreMore.astrologyDesc}</p>
                   </div>
                   <ChevronRight size={18} className="choice-arrow text-purple" />
                 </button>
@@ -677,8 +711,8 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     <Compass size={22} className="text-emerald" />
                   </div>
                   <div className="choice-text-wrap">
-                    <h4 className="choice-title">🧠 My Dream Patterns</h4>
-                    <p className="choice-desc">Check recurring emotions and motifs across all your saved dreams.</p>
+                    <h4 className="choice-title">{t.exploreMore.patternsTitle}</h4>
+                    <p className="choice-desc">{t.exploreMore.patternsDesc}</p>
                   </div>
                   <ChevronRight size={18} className="choice-arrow text-emerald" />
                 </button>
@@ -692,7 +726,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                 onClick={() => setCurrentStage(3)}
               >
                 <ChevronLeft size={16} />
-                <span>Back to Reflection</span>
+                <span>{t.common.back}</span>
               </button>
 
               <button
@@ -700,7 +734,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                 onClick={onNewDream}
               >
                 <RefreshCw size={16} />
-                <span>Explore Another Dream</span>
+                <span>{t.stage4.exploreAnotherButton}</span>
               </button>
             </div>
           </section>
@@ -708,17 +742,17 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
       </main>
 
       {/* ========================================================================= */}
-      {/* OPTIONAL MODALS / DRAWERS FOR EXPLORE MORE */}
+      {/* OPTIONAL MODALS FOR EXPLORE MORE */}
       {/* ========================================================================= */}
 
-      {/* 1. Research Modal */}
+      {/* 1. Sleep & Mind Modal */}
       {exploreModal === 'research' && (
         <div className="modal-backdrop" onClick={() => setExploreModal(null)}>
           <div className="modal-dialog explore-modal-box" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="modal-title-row">
                 <Brain size={20} className="text-cyan" />
-                <h3>Sleep Science & Psychology Research</h3>
+                <h3>{t.modals.researchHeading}</h3>
               </div>
               <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
                 <X size={18} />
@@ -727,13 +761,13 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
 
             <div className="modal-body">
               <div className="simple-science-intro">
-                <h4>In Simple Everyday English:</h4>
+                <h4>{t.modals.researchIntro}</h4>
                 <p>
-                  Dreams may sometimes help the brain process strong emotions connected to waking memories. During REM sleep, the brain reorganizes recent experiences and integrates them with older memories in a safe, offline state.
+                  {t.modals.researchSummary}
                 </p>
               </div>
 
-              <h4 className="research-subheading">Documented Scientific Studies:</h4>
+              <h4 className="research-subheading">{t.modals.studiesHeading}</h4>
               {scientificStudies.length > 0 ? (
                 <div className="research-records-list">
                   {scientificStudies.map((item, idx) => (
@@ -758,20 +792,20 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                             });
                           }}
                         >
-                          View study record →
+                          {t.modals.viewStudyRecord}
                         </button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="no-sources-soft-text">No specific scientific studies matched this particular imagery.</p>
+                <p className="no-sources-soft-text">{t.modals.noScientificFound}</p>
               )}
             </div>
 
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
-                Close
+                {t.common.close}
               </button>
             </div>
           </div>
@@ -785,7 +819,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
             <div className="modal-header">
               <div className="modal-title-row">
                 <BookOpen size={20} className="text-gold" />
-                <h3>Historical Cultural Traditions</h3>
+                <h3>{t.modals.beliefsHeading}</h3>
               </div>
               <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
                 <X size={18} />
@@ -795,7 +829,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
             <div className="modal-body">
               <div className="beliefs-intro-box">
                 <p>
-                  These are historical perspectives from ancient manuscripts and cultural traditions. They reflect historical beliefs, not universal predictions.
+                  {t.modals.beliefsIntro}
                 </p>
               </div>
 
@@ -824,7 +858,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                             }
                           }}
                         >
-                          View source record →
+                          {t.modals.viewSourceRecord}
                         </button>
                       </div>
                     </div>
@@ -832,15 +866,15 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                 </div>
               ) : (
                 <div className="no-sources-soft-card">
-                  <p>No trusted source found for this idea.</p>
-                  <span className="no-source-subtext">Somnithos only shows audited, historical manuscripts and never invents ancient traditions.</span>
+                  <p>{t.modals.noBeliefsFound}</p>
+                  <span className="no-source-subtext">{t.modals.noBeliefsSub}</span>
                 </div>
               )}
             </div>
 
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
-                Close
+                {t.common.close}
               </button>
             </div>
           </div>
@@ -854,7 +888,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
             <div className="modal-header">
               <div className="modal-title-row">
                 <Sparkles size={20} className="text-purple" />
-                <h3>Astrological Perspectives</h3>
+                <h3>{t.modals.astrologyHeading}</h3>
               </div>
               <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
                 <X size={18} />
@@ -866,19 +900,19 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
               <div className="astrology-disclaimer-banner">
                 <ShieldCheck size={16} className="text-gold" />
                 <p>
-                  <strong>Note:</strong> Astrology is a traditional belief system. It is not scientific evidence.
+                  <strong>Note:</strong> {t.modals.astrologyDisclaimer}
                 </p>
               </div>
 
               {!astrologyResult ? (
                 <form className="astrology-birth-form" onSubmit={handleCalculateAstrology}>
                   <p className="astrology-prompt-text">
-                    Optionally provide birth details to explore traditional astrological correspondences for your dream. (We do not ask for your name).
+                    {t.modals.astrologyIntro}
                   </p>
 
                   <div className="form-group-row">
                     <div className="form-field">
-                      <label><Calendar size={14} /> Date of Birth</label>
+                      <label><Calendar size={14} /> {t.modals.birthDate}</label>
                       <input
                         type="date"
                         value={birthDate}
@@ -888,7 +922,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     </div>
 
                     <div className="form-field">
-                      <label><Clock size={14} /> Time of Birth (Optional)</label>
+                      <label><Clock size={14} /> {t.modals.birthTime}</label>
                       <input
                         type="time"
                         value={birthTime}
@@ -898,19 +932,8 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="form-field">
-                    <label><MapPin size={14} /> Birth Place (Optional)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. London, Tokyo, Chicago"
-                      value={birthPlace}
-                      onChange={e => setBirthPlace(e.target.value)}
-                      className="form-input"
-                    />
-                  </div>
-
                   <button type="submit" className="btn btn-primary w-full">
-                    <span>Calculate Astrological Reading</span>
+                    <span>{t.modals.calculateReading}</span>
                   </button>
                 </form>
               ) : (
@@ -929,7 +952,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                     className="btn btn-ghost btn-sm"
                     onClick={() => setAstrologyResult(null)}
                   >
-                    <span>Change birth info</span>
+                    <span>{t.modals.changeBirthInfo}</span>
                   </button>
                 </div>
               )}
@@ -937,7 +960,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
 
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
-                Close
+                {t.common.close}
               </button>
             </div>
           </div>
@@ -951,7 +974,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
             <div className="modal-header">
               <div className="modal-title-row">
                 <Compass size={20} className="text-emerald" />
-                <h3>My Dream Patterns</h3>
+                <h3>{t.modals.patternsHeading}</h3>
               </div>
               <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
                 <X size={18} />
@@ -960,7 +983,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
 
             <div className="modal-body">
               <div className="patterns-summary-box">
-                <h4>Motifs in This Dream:</h4>
+                <h4>{t.modals.motifsInDream}</h4>
                 <div className="motifs-tag-cloud">
                   {(analysis.extractedFeatures.dominantMotifs || []).map((m, i) => (
                     <span key={i} className="motif-pill">{m}</span>
@@ -971,14 +994,14 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
                 </div>
 
                 <p className="pattern-insight-p">
-                  As you record more dreams in your personal archive, Somnithos discovers recurring emotional themes and imagery transitions over time.
+                  {t.modals.patternsInsight}
                 </p>
               </div>
             </div>
 
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
-                Close
+                {t.common.close}
               </button>
             </div>
           </div>

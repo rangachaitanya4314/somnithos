@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "test": "npx tsx src/tests/dreamAnalysis.test.ts && npx tsx src/tests/evidenceProvenance.test.ts && npx tsx src/tests/geminiIntegration.test.ts && npx tsx src/tests/artworkGeneration.test.ts && npx tsx src/tests/resultExperience.test.ts && npx tsx src/tests/dreamJournalAndPatterns.test.ts && npx tsx src/tests/communityPrivacyTrustSafety.test.ts && npx tsx src/tests/serverEndpoints.test.ts",
+    "test": "npx tsx src/tests/dreamAnalysis.test.ts && npx tsx src/tests/evidenceProvenance.test.ts && npx tsx src/tests/geminiIntegration.test.ts && npx tsx src/tests/artworkGeneration.test.ts && npx tsx src/tests/resultExperience.test.ts && npx tsx src/tests/dreamJournalAndPatterns.test.ts && npx tsx src/tests/communityPrivacyTrustSafety.test.ts && npx tsx src/tests/multilingualSupport.test.ts && npx tsx src/tests/serverEndpoints.test.ts",
     "preview": "vite preview",
     "start": "npx tsx server/index.ts"
   },

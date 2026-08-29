@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Sparkles, ShieldCheck, ArrowRight, BookMarked, Telescope, Eye, Volume2, VolumeX, RotateCcw } from 'lucide-react';
 import { RcHeroMonogram } from './RcHeroMonogram';
 import { SonicSignatureService } from '../../services/sonicSignatureService';
+import { useI18n } from '../../services/i18n/I18nContext';
 import type { AppView } from '../layout/Header';
 
 interface HeroProps {
@@ -9,6 +10,7 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
+  const { t } = useI18n();
   const [isSoundActive, setIsSoundActive] = useState<boolean>(() => SonicSignatureService.isEnabled());
   const [animKey, setAnimKey] = useState<number>(0);
 
@@ -90,13 +92,13 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
 
         {/* Phase 4: Main Headline - 2 Lines matching visual reference (3.4s) */}
         <h1 className="hero-headline hero-anim-headline">
-          <span className="headline-line1">EVERY DREAM HAS A</span>
-          <span className="headline-line2">STORY.</span>
+          <span className="headline-line1">{t.home.heroTagline}</span>
+          <span className="headline-line2">{t.home.heroTitle}</span>
         </h1>
 
         {/* Phase 5: Supporting Message (3.8s) */}
         <p className="hero-subheadline hero-anim-subheadline">
-          Explore your dream through culture, history, science, and imagination.
+          {t.home.heroSubtitle}
         </p>
 
         {/* Phase 6: CTA Action Buttons (4.2s) */}
@@ -106,7 +108,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('submit')}
           >
             <Sparkles size={17} />
-            <span>Tell Me Your Dream</span>
+            <span>{t.home.heroCta}</span>
             <ArrowRight size={17} className="btn-arrow" />
           </button>
 
@@ -115,7 +117,7 @@ export const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('symbols')}
           >
             <BookMarked size={17} />
-            <span>Explore Dream Meanings</span>
+            <span>{t.home.heroSecondaryCta}</span>
           </button>
         </div>
 

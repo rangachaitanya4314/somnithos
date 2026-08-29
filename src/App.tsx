@@ -39,7 +39,7 @@ export const App: React.FC = () => {
       const startTime = Date.now();
       const result = await DreamAnalysisApiService.analyzeDream(submission);
       const elapsed = Date.now() - startTime;
-      const remainingDelay = Math.max(0, 650 - elapsed);
+      const remainingDelay = Math.max(0, 2000 - elapsed);
 
       setTimeout(() => {
         setActiveAnalysis(result as unknown as DreamAnalysisResult);
@@ -50,10 +50,12 @@ export const App: React.FC = () => {
     } catch {
       // Fallback
       const fallbackResult = DreamAnalysisEngine.analyze(submission);
-      setActiveAnalysis(fallbackResult);
-      setIsAnalyzing(false);
-      setCurrentView('analysis');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setTimeout(() => {
+        setActiveAnalysis(fallbackResult);
+        setIsAnalyzing(false);
+        setCurrentView('analysis');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 2000);
     }
   };
 

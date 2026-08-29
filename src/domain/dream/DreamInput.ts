@@ -30,6 +30,8 @@ export interface DreamInput {
   culturalBackground?: string;
   privacy?: 'private' | 'anonymous_public';
   createdAt?: string;
+  language?: 'en' | 'te' | 'ta' | 'hi';
+  targetLanguage?: 'en' | 'te' | 'ta' | 'hi';
 }
 
 /**
@@ -37,6 +39,7 @@ export interface DreamInput {
  */
 export function normalizeDreamInput(input: Partial<DreamInput>): DreamInput & { narrative: string; description: string } {
   const narrative = input.narrative || input.description || '';
+  const language = input.language || input.targetLanguage || 'en';
   return {
     id: input.id || 'dream-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
     title: input.title || '',
@@ -63,6 +66,8 @@ export function normalizeDreamInput(input: Partial<DreamInput>): DreamInput & { 
     userInterpretation: input.userInterpretation || '',
     culturalBackground: input.culturalBackground || '',
     privacy: input.privacy || 'private',
-    createdAt: input.createdAt || new Date().toISOString()
+    createdAt: input.createdAt || new Date().toISOString(),
+    language,
+    targetLanguage: language
   };
 }

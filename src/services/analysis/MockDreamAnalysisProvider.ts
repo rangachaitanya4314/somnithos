@@ -182,103 +182,189 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
     // =========================================================================
     const meaningfulHighlights: { emoji: string; text: string }[] = [];
     let emotionalJourney = '';
+    const lang = input.language || input.targetLanguage || 'en';
 
-    // Situation 1: Dark forest -> fear -> warm light -> calm
-    if ((text.includes('forest') || text.includes('woods')) && (text.includes('light') || text.includes('lantern') || text.includes('warm'))) {
-      meaningfulHighlights.push({ emoji: '🌲', text: 'You were in a dark forest.' });
-      if (text.includes('scared') || text.includes('afraid') || text.includes('fear')) {
-        meaningfulHighlights.push({ emoji: '😟', text: 'You felt scared at first.' });
-      }
-      if (text.includes('warm light') || text.includes('light in the distance') || text.includes('light')) {
-        meaningfulHighlights.push({ emoji: '💡', text: 'Then you saw a warm light in the distance.' });
-      }
-      if (text.includes('calm') || text.includes('peace') || text.includes('safe') || text.includes('relieved')) {
-        meaningfulHighlights.push({ emoji: '😌', text: 'You felt calm afterward.' });
-      }
-      emotionalJourney = 'Fear → Warm Light → Calm';
-    }
-    // Situation 2: Purple train underwater -> huge fish -> silent passengers
-    else if (text.includes('train') && (text.includes('ocean') || text.includes('underwater') || text.includes('sea'))) {
-      if (text.includes('purple') || text.includes('violet')) {
-        meaningfulHighlights.push({ emoji: '💜', text: 'You were inside a purple train moving under the ocean.' });
+    // ----------------------------------------------------
+    // MULTILINGUAL HIGHLIGHTS & EMOTIONAL JOURNEY SYNTHESIS
+    // ----------------------------------------------------
+    if (lang === 'te') {
+      // Telugu Synthesis
+      if (text.includes('forest') || text.includes('అడవి') || text.includes('చెట్లు')) {
+        meaningfulHighlights.push({ emoji: '🌲', text: 'చీకటి అడవిలో నడక' });
+        if (text.includes('scared') || text.includes('భయం') || text.includes('fear')) {
+          meaningfulHighlights.push({ emoji: '😟', text: 'మొదట కలిగిన భయం' });
+        }
+        if (text.includes('light') || text.includes('కాంతి') || text.includes('వెలుగు')) {
+          meaningfulHighlights.push({ emoji: '💡', text: 'దూరంలో కనిపించిన వెచ్చని కాంతి' });
+        }
+        if (text.includes('calm') || text.includes('peace') || text.includes('ప్రశాంత')) {
+          meaningfulHighlights.push({ emoji: '😌', text: 'చివరకు కలిగిన ప్రశాంతత' });
+        }
+        emotionalJourney = 'భయం → వెచ్చని కాంతి → ప్రశాంతత';
+      } else if (text.includes('train') || text.includes('ocean') || text.includes('రైలు') || text.includes('సముద్రం') || text.includes('చేప')) {
+        meaningfulHighlights.push({ emoji: '🚂', text: 'సముద్రం అడుగున ప్రయాణించే ఊదా రంగు రైలు' });
+        meaningfulHighlights.push({ emoji: '🐟', text: 'కిటికీల బయట ఈదుతున్న పెద్ద నీలిరంగు చేపలు' });
+        meaningfulHighlights.push({ emoji: '🤫', text: 'చుట్టూ ఉన్న వ్యక్తుల ప్రశాంతమైన నిశ్శబ్దం' });
+        emotionalJourney = 'ఆశ్చర్యం → నిశ్శబ్ద ప్రశాంతత';
+      } else if (text.includes('school') || text.includes('పాఠశాల') || text.includes('స్నేహితు')) {
+        meaningfulHighlights.push({ emoji: '🏫', text: 'పాత పాఠశాలలో ఉండటం' });
+        meaningfulHighlights.push({ emoji: '🔍', text: 'తరగతి గది కోసం వెతకడం' });
+        meaningfulHighlights.push({ emoji: '😟', text: 'కలిగిన చిన్నపాటి ఆందోళన' });
+        meaningfulHighlights.push({ emoji: '🤝', text: 'బయట వేచి ఉన్న ప్రాణస్నేహితుడు' });
+        emotionalJourney = 'ఆందోళన → సాంత్వన';
       } else {
-        meaningfulHighlights.push({ emoji: '🚆', text: 'You were traveling inside an underwater train.' });
+        meaningfulHighlights.push({ emoji: '🌌', text: 'మీ కలలో కనిపించిన ముఖ్యమైన దృశ్యం' });
+        meaningfulHighlights.push({ emoji: '💭', text: 'కలలో కలిగిన భావాల మార్పు' });
+        meaningfulHighlights.push({ emoji: '🕊️', text: 'ప్రశాంతమైన ఆలోచన' });
+        emotionalJourney = 'పరిశీలన → ప్రశాంతత';
       }
-      if (text.includes('fish') || text.includes('creature')) {
-        meaningfulHighlights.push({ emoji: '🐟', text: 'Huge blue fish were swimming outside the windows.' });
-      }
-      if (text.includes('silent') || text.includes('quiet') || text.includes('passenger')) {
-        meaningfulHighlights.push({ emoji: '🤫', text: 'Everyone around was silent and calm.' });
-      }
-      if (text.includes('door') || text.includes('forest') || text.includes('clock')) {
-        meaningfulHighlights.push({ emoji: '🚪', text: 'You encountered an unexpected threshold between water and land.' });
-      }
-      emotionalJourney = 'Surreal wonder → Quiet stillness';
-    }
-    // Situation 3: Old school -> couldn't find classroom -> nervousness -> friend waiting -> relief
-    else if (text.includes('school') || text.includes('classroom') || text.includes('exam') || text.includes('hallway')) {
-      meaningfulHighlights.push({ emoji: '🏫', text: 'You were standing in your old school.' });
-      if (text.includes('could not find') || text.includes("couldn't find") || text.includes('lost') || text.includes('searching')) {
-        meaningfulHighlights.push({ emoji: '🔍', text: 'You were searching for your classroom and could not find it.' });
-      }
-      if (text.includes('nervous') || text.includes('anxious') || text.includes('worried') || text.includes('stressed')) {
-        meaningfulHighlights.push({ emoji: '😟', text: 'You felt nervous and disoriented.' });
-      }
-      if (text.includes('friend') || text.includes('best friend') || text.includes('waiting')) {
-        meaningfulHighlights.push({ emoji: '🤝', text: 'Then you found your best friend waiting for you outside.' });
-      }
-      emotionalJourney = 'Nervousness → Relief and connection';
-    }
-    // Situation 4: Flying over ocean / sky
-    else if (text.includes('fly') || text.includes('flying') || text.includes('floating')) {
-      meaningfulHighlights.push({ emoji: '🕊️', text: 'You were floating weightlessly above the ground.' });
-      if (text.includes('ocean') || text.includes('sea') || text.includes('water')) {
-        meaningfulHighlights.push({ emoji: '🌊', text: 'An expansive open ocean stretched beneath you.' });
-      }
-      if (text.includes('moon') || text.includes('night') || text.includes('stars')) {
-        meaningfulHighlights.push({ emoji: '🌙', text: 'You moved through the quiet atmosphere of night.' });
-      }
-      if (text.includes('peace') || text.includes('wonder') || text.includes('joy')) {
-        meaningfulHighlights.push({ emoji: '✨', text: 'You felt a deep sense of lightness and clarity.' });
-      }
-      emotionalJourney = 'Release → Expansive freedom';
-    }
-    // Generic dynamic fallback: construct 3-4 natural observations from extracted details
-    else {
-      // 1. Setting/Location
-      const loc = Array.from(detectedLocations)[0] || (detectedSymbols.has('forest') ? 'forest' : detectedSymbols.has('water') ? 'open waters' : 'an unfamiliar space');
-      meaningfulHighlights.push({ emoji: '🌌', text: `You found yourself in ${loc.replace('_', ' ')}.` });
-
-      // 2. Objects / actions
-      const mainSymbols = Array.from(detectedSymbols);
-      if (mainSymbols.length > 0) {
-        const readableSym = mainSymbols.slice(0, 2).map(s => s.replace('_', ' ')).join(' and ');
-        meaningfulHighlights.push({ emoji: '🧭', text: `You encountered ${readableSym} moving through the scene.` });
-      }
-
-      // 3. Emotions & mood
-      const emos = Array.from(detectedEmotions);
-      if (emos.length > 0) {
-        meaningfulHighlights.push({ emoji: '💭', text: `The atmosphere stirred feelings of ${emos.join(' and ')}.` });
-        emotionalJourney = emos.join(' → ');
+    } else if (lang === 'ta') {
+      // Tamil Synthesis
+      if (text.includes('forest') || text.includes('காடு') || text.includes('மரம்')) {
+        meaningfulHighlights.push({ emoji: '🌲', text: 'இருண்ட காட்டில் நடைபயணம்' });
+        if (text.includes('scared') || text.includes('பயம்') || text.includes('fear')) {
+          meaningfulHighlights.push({ emoji: '😟', text: 'முதலில் தோன்றிய பயம்' });
+        }
+        if (text.includes('light') || text.includes('ஒளி') || text.includes('வெளிச்சம்')) {
+          meaningfulHighlights.push({ emoji: '💡', text: 'தூரத்தில் தெரிந்த இதமான ஒளி' });
+        }
+        if (text.includes('calm') || text.includes('peace') || text.includes('அமைதி')) {
+          meaningfulHighlights.push({ emoji: '😌', text: 'இறுதியில் ஏற்பட்ட அமைதி' });
+        }
+        emotionalJourney = 'பயம் → இதமான ஒளி → அமைதி';
+      } else if (text.includes('train') || text.includes('ocean') || text.includes('ரயில்') || text.includes('கடல்') || text.includes('மீன்')) {
+        meaningfulHighlights.push({ emoji: '🚂', text: 'கடலுக்கு அடியில் நகரும் ஊதா நிற ரயில்' });
+        meaningfulHighlights.push({ emoji: '🐟', text: 'ஜன்னல்களுக்கு வெளியே நீந்திய பெரிய நீல மீன்கள்' });
+        meaningfulHighlights.push({ emoji: '🤫', text: 'பயணிகளின் அமைதியான சூழல்' });
+        emotionalJourney = 'வியப்பு → அமைதியான சூழல்';
+      } else if (text.includes('school') || text.includes('பள்ளி') || text.includes('நண்பர்')) {
+        meaningfulHighlights.push({ emoji: '🏫', text: 'பழைய பள்ளியில் இருப்பது' });
+        meaningfulHighlights.push({ emoji: '🔍', text: 'வகுப்பறையைத் தேடியது' });
+        meaningfulHighlights.push({ emoji: '😟', text: 'தோன்றிய சிறிய பதற்றம்' });
+        meaningfulHighlights.push({ emoji: '🤝', text: 'வெளியே காத்திருந்த சிறந்த நண்பர்' });
+        emotionalJourney = 'பதற்றம் → மன அமைதி';
       } else {
-        meaningfulHighlights.push({ emoji: '🕊️', text: 'You experienced a calm, reflective state of mind.' });
-        emotionalJourney = 'Contemplation → Awakening';
+        meaningfulHighlights.push({ emoji: '🌌', text: 'கனவில் தென்பட்ட முக்கியமான சூழல்' });
+        meaningfulHighlights.push({ emoji: '💭', text: 'கனவில் ஏற்பட்ட உணர்வு மாற்றம்' });
+        meaningfulHighlights.push({ emoji: '🕊️', text: 'அமைதியான சிந்தனை' });
+        emotionalJourney = 'கவனிப்பு → அமைதி';
       }
-    }
-
-    // Construct simple everyday reflection
-    let simpleReflection = '';
-    if (emotionalJourney.toLowerCase().includes('fear') && emotionalJourney.toLowerCase().includes('calm')) {
-      simpleReflection = 'You may be dealing with something that feels uncertain in waking life, while also looking for something that makes you feel safe or calm.';
-    } else if (text.includes('school') || text.includes('friend')) {
-      simpleReflection = 'You might be reflecting on past expectations or pressures, while finding comfort in the people or memories that bring you genuine support.';
-    } else if (text.includes('train') || text.includes('underwater')) {
-      simpleReflection = 'You may be quietly navigating a unique transition in your thoughts, observing deep feelings beneath the surface without rushing.';
-    } else if (detectedSymbols.has('flying')) {
-      simpleReflection = 'You might be seeking a fresh perspective on waking challenges, giving yourself permission to rise above daily worries.';
+    } else if (lang === 'hi') {
+      // Hindi Synthesis
+      if (text.includes('forest') || text.includes('जंगल') || text.includes('पेड़')) {
+        meaningfulHighlights.push({ emoji: '🌲', text: 'रात में अंधेरे जंगल में चलना' });
+        if (text.includes('scared') || text.includes('डर') || text.includes('fear')) {
+          meaningfulHighlights.push({ emoji: '😟', text: 'शुरुआत में लगा डर' });
+        }
+        if (text.includes('light') || text.includes('रोशनी') || text.includes('प्रकाश')) {
+          meaningfulHighlights.push({ emoji: '💡', text: 'दूर से दिखी हल्की रोशनी' });
+        }
+        if (text.includes('calm') || text.includes('peace') || text.includes('सुकून') || text.includes('शांति')) {
+          meaningfulHighlights.push({ emoji: '😌', text: 'बाद में महसूस हुआ सुकून' });
+        }
+        emotionalJourney = 'डर → हल्की रोशनी → सुकून';
+      } else if (text.includes('train') || text.includes('ocean') || text.includes('ट्रेन') || text.includes('समुद्र') || text.includes('मछली')) {
+        meaningfulHighlights.push({ emoji: '🚂', text: 'समुद्र के नीचे चलती बैंगनी ट्रेन' });
+        meaningfulHighlights.push({ emoji: '🐟', text: 'खिड़कियों के बाहर तैरती बड़ी नीली मछलियां' });
+        meaningfulHighlights.push({ emoji: '🤫', text: 'साथ मौजूद लोगों का शांत माहौल' });
+        emotionalJourney = 'विस्मय → शांत वातावरण';
+      } else if (text.includes('school') || text.includes('स्कूल') || text.includes('दोस्त')) {
+        meaningfulHighlights.push({ emoji: '🏫', text: 'पुराने स्कूल में होना' });
+        meaningfulHighlights.push({ emoji: '🔍', text: 'क्लासरूम की तलाश' });
+        meaningfulHighlights.push({ emoji: '😟', text: 'थोड़ी घबराहट महसूस होना' });
+        meaningfulHighlights.push({ emoji: '🤝', text: 'बाहर इंतज़ार करता पक्का दोस्त' });
+        emotionalJourney = 'घबराहट → राहत';
+      } else {
+        meaningfulHighlights.push({ emoji: '🌌', text: 'सपने का खास परिवेश' });
+        meaningfulHighlights.push({ emoji: '💭', text: 'भावनाओं में आया बदलाव' });
+        meaningfulHighlights.push({ emoji: '🕊️', text: 'शांत अवलोकन' });
+        emotionalJourney = 'अवलोकन → शांति';
+      }
     } else {
-      simpleReflection = 'One possible way to look at it is that your mind is organizing everyday experiences, balancing what feels unfamiliar with what brings you comfort.';
+      // English Synthesis
+      if (text.includes('forest') || text.includes('wood') || text.includes('dark')) {
+        meaningfulHighlights.push({ emoji: '🌲', text: 'Dark forest at night' });
+        if (text.includes('scared') || text.includes('fear') || text.includes('afraid')) {
+          meaningfulHighlights.push({ emoji: '😟', text: 'Felt scared at first' });
+        }
+        if (text.includes('warm light') || text.includes('light') || text.includes('lantern')) {
+          meaningfulHighlights.push({ emoji: '💡', text: 'Saw a warm light in the distance' });
+        }
+        if (text.includes('calm') || text.includes('peace') || text.includes('relief')) {
+          meaningfulHighlights.push({ emoji: '😌', text: 'Felt calm afterward' });
+        }
+        emotionalJourney = 'Fear → Warm Light → Calm';
+      } else if (text.includes('train') || text.includes('purple train') || text.includes('ocean')) {
+        meaningfulHighlights.push({ emoji: '🚂', text: 'Inside a purple train moving under the ocean' });
+        if (text.includes('fish') || text.includes('blue fish')) {
+          meaningfulHighlights.push({ emoji: '🐟', text: 'Huge blue fish swimming outside windows' });
+        }
+        if (text.includes('silent') || text.includes('quiet') || text.includes('passenger')) {
+          meaningfulHighlights.push({ emoji: '🤫', text: 'Everyone around was silent and calm' });
+        }
+        emotionalJourney = 'Surreal wonder → Quiet stillness';
+      } else if (text.includes('school') || text.includes('classroom') || text.includes('exam')) {
+        meaningfulHighlights.push({ emoji: '🏫', text: 'Standing in your old school' });
+        meaningfulHighlights.push({ emoji: '🔍', text: 'Could not find your classroom' });
+        meaningfulHighlights.push({ emoji: '😟', text: 'Felt nervous' });
+        meaningfulHighlights.push({ emoji: '🤝', text: 'Found your best friend waiting outside' });
+        emotionalJourney = 'Nervousness → Relief';
+      } else {
+        const loc = Array.from(detectedLocations)[0] || 'distinct setting';
+        meaningfulHighlights.push({ emoji: '🌌', text: `Scene set in a ${loc.replace('_', ' ')}` });
+        meaningfulHighlights.push({ emoji: '🧭', text: 'Key elements interacting in your dream' });
+        meaningfulHighlights.push({ emoji: '💭', text: 'A thoughtful emotional progression' });
+        emotionalJourney = 'Observation → Quiet Awareness';
+      }
+    }
+
+    // ----------------------------------------------------
+    // MULTILINGUAL 3-4 SHORT LINE REFLECTION SYNTHESIS
+    // ----------------------------------------------------
+    let simpleReflection = '';
+    if (lang === 'te') {
+      if (text.includes('forest') || text.includes('అడవి') || text.includes('భయం') || emotionalJourney.includes('భయం')) {
+        simpleReflection = 'ఒక ఆలోచన ఏమిటంటే, మీరు నిజ జీవితంలో ఏదైనా అనిశ్చిత పరిస్థితిని ఎదుర్కొంటుండవచ్చు.\nమీకు సరైన మార్గం లేదా భరోసా ఇచ్చే విషయం కోసం చూస్తుండవచ్చు.\nపరిస్థితులు మొదట్లో కష్టంగా అనిపించినా, పరిష్కారం దొరుకుతుందనే భరోసాను ఇది సూచించవచ్చు.\nమీ దైనందిన జీవితంలో మీకు అలాంటి ప్రశాంతతను ఇచ్చే విషయం ఏమిటో మీరు ఆలోచించవచ్చు.';
+      } else if (text.includes('school') || text.includes('పాఠశాల') || text.includes('స్నేహితు')) {
+        simpleReflection = 'ఒక ఆలోచన ఏమిటంటే, మీరు పాత బాధ్యతలు లేదా అంచనాల గురించి ఆలోచిస్తుండవచ్చు.\nరాబోయే సవాళ్లకు మీరు సిద్ధంగా ఉన్నారా అని ఆలోచిస్తుండవచ్చు.\nమీ సన్నిహిత స్నేహితులు మీకు ఎంతటి సాంత్వన మరియు స్థిరత్వాన్ని ఇస్తారో ఇది సూచించవచ్చు.\nప్రతి ఒత్తిడిని మీరే ఒక్కరే మోయాల్సిన అవసరం లేదని మీరు గుర్తుంచుకోవచ్చు.';
+      } else if (text.includes('train') || text.includes('రైలు') || text.includes('సముద్రం')) {
+        simpleReflection = 'ఒక ఆలోచన ఏమిటంటే, మీరు మీ జీవితంలో ఒక వ్యక్తిగత మార్పును అనుభవిస్తుండవచ్చు.\nలోతైన భావాలను తొందరపడకుండా ప్రశాంతంగా పరిశీలిస్తుండవచ్చు.\nఆలోచించుకోవడానికి ఒక ప్రశాంతమైన ఏకాంత స్థలం కావాలనే కోరికను ఇది సూచించవచ్చు.\nజీవిత ప్రయాణాన్ని ప్రశాంతంగా సాగనివ్వడానికి మీకు మీరు సమయం ఇచ్చుకోవచ్చు.';
+      } else {
+        simpleReflection = 'ఒక ఆలోచన ఏమిటంటే, మీ మనస్సు రోజువారీ అనుభవాలను మరియు భావాలను సర్దుబాటు చేస్తుండవచ్చు.\nకొత్త మార్పులను ఎదుర్కొంటూనే మీ మనస్సుకు సాంత్వన చేకూర్చే అంశాలను ఇది వెతుకుతుండవచ్చు.\nజీవితంలో స్థిరత్వాన్ని మరియు స్పష్టతను కనుగొనే ప్రయత్నాన్ని ఇది సూచించవచ్చు.\nమీకు ప్రశాంతతను మరియు బలాన్ని ఇచ్చే విషయాల గురించి మీరు ఆలోచించవచ్చు.';
+      }
+    } else if (lang === 'ta') {
+      if (text.includes('forest') || text.includes('காடு') || text.includes('பயம்') || emotionalJourney.includes('பயம்')) {
+        simpleReflection = 'ஒரு பார்வை என்னவென்றால், நீங்கள் நிஜ வாழ்க்கையில் ஏதேனும் ஒரு நிச்சயமற்ற நிலையை கடந்து கொண்டிருக்கலாம்.\nஉங்களுக்கு ஒரு நிலையான ஆதரவு அல்லது வழிகாட்டலை நீங்கள் தேடலாம்.\nதொடக்கத்தில் கடினமாகத் தோன்றினாலும், நீங்கள் அமைதியைக் காண்பீர்கள் என்பதை இது குறிக்கலாம்.\nஉங்கள் அன்றாட வாழ்வில் உங்களுக்கு அதே அமைதியைத் தரும் விஷயம் எதுவென்று நீங்கள் யோசிக்கலாம்.';
+      } else if (text.includes('school') || text.includes('பள்ளி') || text.includes('நண்பர்')) {
+        simpleReflection = 'ஒரு பார்வை என்னவென்றால், நீங்கள் பழைய பொறுப்புகள் அல்லது எதிர்பார்ப்புகளைப் பற்றி சிந்திக்கலாம்.\nஅடுத்த கட்ட சவால்களுக்கு நீங்கள் தயாராக இருக்கிறீர்களா என்று தோன்றலாம்.\nஉங்கள் நெருங்கிய நண்பர்கள் உங்களுக்கு எவ்வளவு மன அமைதியையும் உறுதியையும் தருகிறார்கள் என்பதை இது குறிக்கலாம்.\nஎல்லா சுமைகளையும் நீங்கள் தனியாக சுமக்க வேண்டியதில்லை என்பதை நீங்கள் நினைவில் கொள்ளலாம்.';
+      } else if (text.includes('train') || text.includes('ரயில்') || text.includes('கடல்')) {
+        simpleReflection = 'ஒரு பார்வை என்னவென்றால், உங்கள் வாழ்க்கையில் ஒரு புதிய மாற்றத்தை அமைதியாகக் கடந்து கொண்டிருக்கலாம்.\nமனதின் ஆழமான உணர்வுகளை அவசரப்படாமல் அமைதியாக கவனிக்கலாம்.\nஅமைதியாக சிந்திக்க ஒரு தனிமையான இடம் தேவை என்பதை இது குறிக்கலாம்.\nவாழ்வின் பயணத்தை அதன் போக்கில் ரசிக்க உங்களுக்கு நீங்களே நேரம் கொடுக்கலாம்.';
+      } else {
+        simpleReflection = 'ஒரு பார்வை என்னவென்றால், உங்கள் மனம் அன்றாட அனுபவங்களை ஒழுங்குபடுத்திக் கொண்டிருக்கலாம்.\nமாற்றங்களை எதிர்கொள்ளும் போது உங்கள் மனதுக்கு அமைதி தரும் விஷயங்களை இது தேடலாம்.\nவாழ்வில் தெளிவையும் உறுதியையும் கண்டறியும் எளிய முயற்சியை இது குறிக்கலாம்.\nஉங்களுக்கு அமைதியையும் ஊக்கத்தையும் தரும் விஷயங்களை நீங்கள் சிந்திக்கலாம்.';
+      }
+    } else if (lang === 'hi') {
+      if (text.includes('forest') || text.includes('जंगल') || text.includes('डर') || emotionalJourney.includes('डर')) {
+        simpleReflection = 'सोचने का एक तरीका यह है कि आप असल ज़िंदगी में किसी अनिश्चित स्थिति से गुजर रहे हों।\nआप किसी भरोसेमंद सहारे या सही दिशा की तलाश में हो सकते हैं।\nयह दर्शाता है कि शुरुआती डर के बाद भी आपको राहत और सुरक्षा मिल सकती है।\nआप विचार कर सकते हैं कि आपकी रोजमर्रा की ज़िंदगी में आपको ऐसा ही सुकून किससे मिलता है।';
+      } else if (text.includes('school') || text.includes('स्कूल') || text.includes('दोस्त')) {
+        simpleReflection = 'सोचने का एक तरीका यह है कि आप पुरानी ज़िम्मेदारियों या उम्मीदों के बारे में सोच रहे हों।\nआप सोच रहे होंगे कि क्या आप आने वाली चुनौतियों के लिए तैयार हैं।\nयह दर्शाता है कि आपके करीबी दोस्त आपको कितना संबल और भरोसा देते हैं।\nआप खुद को याद दिला सकते हैं कि हर दबाव का सामना आपको अकेले करने की ज़रूरत नहीं है।';
+      } else if (text.includes('train') || text.includes('ट्रेन') || text.includes('समुद्र')) {
+        simpleReflection = 'सोचने का एक तरीका यह है कि आप ज़िंदगी में किसी आंतरिक बदलाव से गुजर रहे हों।\nआप अपने गहरे विचारों को बिना किसी जल्दबाज़ी के शांत होकर समझ रहे हों।\nयह शांत और सुरक्षित माहौल में खुद को समझने की चाहत को दर्शाता है।\nआप इस यात्रा को इसके स्वाभाविक रूप में आगे बढ़ने का समय दे सकते हैं।';
+      } else {
+        simpleReflection = 'सोचने का एक तरीका यह है कि आपका दिमाग रोजमर्रा के अनुभवों को व्यवस्थित कर रहा हो।\nआप नई चुनौतियों के बीच अपने लिए स्थिरता और सहजता तलाश रहे हों।\nयह जीवन में आगे बढ़ते हुए खुद को स्थिर रखने के प्रयास को दर्शाता है।\nआप सोच सकते हैं कि कौन सी बातें आपको सबसे ज्यादा सुकून और भरोसा देती हैं।';
+      }
+    } else {
+      // English
+      if (emotionalJourney.toLowerCase().includes('fear') && emotionalJourney.toLowerCase().includes('calm')) {
+        simpleReflection = 'One possible way to look at it is that you may be working through something uncertain in waking life.\nYou might be looking for a steady source of reassurance or direction.\nThis could reflect a quiet moment of discovering safety even when things start out dark.\nYou may think about what brings you that same calm feeling in your daily routine.';
+      } else if (text.includes('school') || text.includes('friend')) {
+        simpleReflection = 'One possible way to look at it is that you might be reflecting on old expectations or responsibilities.\nYou may be wondering if you are ready for upcoming steps or challenges.\nThis could reflect how much comfort and stability your closest friendships give you.\nYou might remind yourself that you do not need to carry every pressure on your own.';
+      } else if (text.includes('train') || text.includes('underwater')) {
+        simpleReflection = 'One possible way to look at it is that you may be quietly navigating a personal transition.\nYou might be noticing deeper feelings beneath the surface without needing to rush them.\nThis could reflect a wish for a calm, undisturbed space to think.\nYou may give yourself permission to simply take in the journey as it moves along.';
+      } else if (detectedSymbols.has('flying')) {
+        simpleReflection = 'One possible way to look at it is that you could be looking for a wider, clearer view on things.\nYou may feel ready to rise above small everyday worries and stresses.\nThis could reflect a natural desire for lightness, freedom, and room to breathe.\nYou might think about where in your life you would welcome more simplicity.';
+      } else {
+        simpleReflection = 'One possible way to look at it is that your mind may be organizing everyday feelings and experiences.\nYou might be balancing what is new or uncertain with what feels familiar and safe.\nThis could reflect a gentle effort to find your footing during a time of change.\nYou may think about what helps you feel most steady and at ease.';
+      }
     }
 
     // Separate dominant vs secondary motifs

@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Sparkles, BookOpen, ShieldCheck, Feather, Palette } from 'lucide-react';
+import { Sparkles, ShieldCheck, Feather, Palette } from 'lucide-react';
+import { useI18n } from '../../services/i18n/I18nContext';
 
 interface AnalysisLoadingOverlayProps {
   isOpen: boolean;
 }
 
-const STEPS = [
-  { icon: Sparkles, text: 'Reading your dream...' },
-  { icon: BookOpen, text: 'Finding relevant knowledge...' },
-  { icon: ShieldCheck, text: 'Separating evidence from interpretation...' },
-  { icon: Feather, text: 'Creating your personal reflection...' },
-  { icon: Palette, text: 'Imagining your dream...' }
-];
-
 export const AnalysisLoadingOverlay: React.FC<AnalysisLoadingOverlayProps> = ({ isOpen }) => {
   const [currentStepIdx, setCurrentStepIdx] = useState<number>(0);
+  const { t } = useI18n();
+
+  const steps = [
+    { icon: Sparkles, text: t.loadingOverlay.step1 },
+    { icon: Feather, text: t.loadingOverlay.step2 },
+    { icon: ShieldCheck, text: t.loadingOverlay.step3 },
+    { icon: Palette, text: t.loadingOverlay.step4 }
+  ];
 
   useEffect(() => {
     if (!isOpen) {
@@ -23,15 +24,15 @@ export const AnalysisLoadingOverlay: React.FC<AnalysisLoadingOverlayProps> = ({ 
     }
 
     const interval = setInterval(() => {
-      setCurrentStepIdx(prev => (prev < STEPS.length - 1 ? prev + 1 : prev));
-    }, 450);
+      setCurrentStepIdx(prev => (prev < steps.length - 1 ? prev + 1 : prev));
+    }, 500);
 
     return () => clearInterval(interval);
-  }, [isOpen]);
+  }, [isOpen, steps.length]);
 
   if (!isOpen) return null;
 
-  const ActiveIcon = STEPS[currentStepIdx].icon;
+  const ActiveIcon = steps[currentStepIdx].icon;
 
   return (
     <div className="analysis-loading-backdrop" role="dialog" aria-modal="true" aria-label="Analyzing dream">
@@ -44,13 +45,13 @@ export const AnalysisLoadingOverlay: React.FC<AnalysisLoadingOverlayProps> = ({ 
           </div>
         </div>
 
-        <h3 className="loading-step-title">{STEPS[currentStepIdx].text}</h3>
+        <h3 className="loading-step-title">{steps[currentStepIdx].text}</h3>
         <p className="loading-step-subtitle">
-          Somnithos grounds insights in audited human sources and creates your personal reflection.
+          {t.loadingOverlay.subtitle}
         </p>
 
         <div className="loading-progress-track">
-          {STEPS.map((step, idx) => (
+          {steps.map((step, idx) => (
             <div
               key={idx}
               className={`loading-progress-dot ${idx === currentStepIdx ? 'active' : ''} ${idx < currentStepIdx ? 'completed' : ''}`}
@@ -62,3 +63,4 @@ export const AnalysisLoadingOverlay: React.FC<AnalysisLoadingOverlayProps> = ({ 
     </div>
   );
 };
+

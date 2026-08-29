@@ -4,6 +4,7 @@ import type { DreamAnalysisResult } from '../../domain/analysis/DreamAnalysisRes
 import type { DreamFeatures } from '../../domain/dream/DreamFeatures';
 import type { DreamInput } from '../../domain/dream/DreamInput';
 import type { ClaimRecord } from '../../domain/evidence/ClaimRecord';
+import { MultilingualSafetyFilter } from '../../services/i18n/multilingualSafety';
 
 export interface ValidationReport {
   isValid: boolean;
@@ -130,6 +131,7 @@ export class AnalysisValidationLayer {
           sanitized = sanitized.replace(new RegExp(phrase, 'gi'), 'a transition or period of change');
         }
       }
+      sanitized = MultilingualSafetyFilter.sanitize(sanitized);
       return sanitized;
     };
 

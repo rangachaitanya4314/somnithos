@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { Moon, Sparkles, BookOpen, HelpCircle, Users, Bookmark, Menu, X, Volume2, VolumeX, ShieldCheck } from 'lucide-react';
+import { Moon, Sparkles, BookOpen, HelpCircle, Users, Bookmark, Menu, X, Volume2, VolumeX, ShieldCheck, Globe, ChevronDown } from 'lucide-react';
 import { SonicSignatureService } from '../../services/sonicSignatureService';
 import { AuditReportModal } from '../common/AuditReportModal';
+import { useI18n } from '../../services/i18n/I18nContext';
+import type { LanguageCode } from '../../services/i18n/types';
 
 export type AppView = 'home' | 'submit' | 'analysis' | 'symbols' | 'faq' | 'community' | 'saved';
 
@@ -15,6 +17,8 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAudioPlaying, setIsAudioPlaying] = useState(() => SonicSignatureService.isEnabled());
   const [isAuditModalOpen, setIsAuditModalOpen] = useState(false);
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  const { language, setLanguage, supportedLanguages, t } = useI18n();
 
   const toggleAmbientAudio = () => {
     const nextState = SonicSignatureService.toggleSound();
@@ -25,6 +29,13 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
     onNavigate(view);
     setMobileMenuOpen(false);
   };
+
+  const handleLanguageSelect = (code: LanguageCode) => {
+    setLanguage(code);
+    setIsLangDropdownOpen(false);
+  };
+
+  const currentLangObj = supportedLanguages.find(l => l.code === language) || supportedLanguages[0];
 
   return (
     <>
@@ -37,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
               <Sparkles size={13} className="brand-sparkle" />
             </div>
             <div className="brand-text">
-              <span className="brand-name">SOMNITHOS</span>
+              <span className="brand-name">{t.common.somnithosPill}</span>
               <span className="brand-sub">Where dreams meet meaning.</span>
             </div>
           </div>
@@ -55,7 +66,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
               onClick={() => handleNavClick('submit')}
             >
               <Sparkles size={14} />
-              <span>Explore Dream</span>
+              <span>{t.common.newDream}</span>
             </button>
             <button
               className={`nav-link ${currentView === 'symbols' ? 'active' : ''}`}
@@ -76,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
               onClick={() => handleNavClick('community')}
             >
               <Users size={14} />
-              <span>Community Wall</span>
+              <span>{t.common.community}</span>
             </button>
             <button
               className={`nav-link saved-btn ${currentView === 'saved' ? 'active' : ''}`}
@@ -84,9 +95,71 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
               title="View saved dreams"
             >
               <Bookmark size={14} />
-              <span>Saved</span>
+              <span>{t.common.save}</span>
               {savedCount > 0 && <span className="badge-count">{savedCount}</span>}
             </button>
+
+            {/* Language Selector Dropdown */}
+            <div className="lang-selector-wrapper" style={{ position: 'relative' }}>
+              <button
+                className="nav-link lang-selector-btn"
+                onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+                title="Change language"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+              >
+                <Globe size={14} />
+                <span>{currentLangObj.nativeName}</span>
+                <ChevronDown size={12} style={{ opacity: 0.7 }} />
+              </button>
+
+              {isLangDropdownOpen && (
+                <div
+                  className="lang-dropdown-menu"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    right: 0,
+                    background: 'rgba(10, 16, 32, 0.95)',
+                    border: '1px solid var(--border-gold)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '0.4rem',
+                    minWidth: '130px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.7)',
+                    backdropFilter: 'blur(16px)',
+                    zIndex: 100,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.2rem'
+                  }}
+                >
+                  {supportedLanguages.map(langOpt => (
+                    <button
+                      key={langOpt.code}
+                      onClick={() => handleLanguageSelect(langOpt.code)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.45rem 0.75rem',
+                        background: language === langOpt.code ? 'rgba(197, 160, 89, 0.15)' : 'transparent',
+                        border: 'none',
+                        borderRadius: 'var(--radius-sm)',
+                        color: language === langOpt.code ? 'var(--text-gold)' : 'var(--text-primary)',
+                        fontSize: '0.85rem',
+                        fontWeight: language === langOpt.code ? 600 : 400,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        width: '100%',
+                        transition: 'background 0.2s ease'
+                      }}
+                    >
+                      <span>{langOpt.nativeName}</span>
+                      {language === langOpt.code && <span style={{ fontSize: '0.75rem' }}>✓</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Audit Report Trigger */}
             <button
@@ -121,6 +194,34 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
         {/* Mobile Drawer */}
         {mobileMenuOpen && (
           <div className="mobile-nav-drawer">
+            {/* Mobile Language Switcher Row */}
+            <div style={{ display: 'flex', gap: '0.4rem', padding: '0.5rem 0.2rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+              {supportedLanguages.map(langOpt => (
+                <button
+                  key={langOpt.code}
+                  onClick={() => {
+                    handleLanguageSelect(langOpt.code);
+                    setMobileMenuOpen(false);
+                  }}
+                  style={{
+                    flex: 1,
+                    minWidth: '70px',
+                    padding: '0.35rem 0.5rem',
+                    background: language === langOpt.code ? 'rgba(197, 160, 89, 0.2)' : 'rgba(255,255,255,0.05)',
+                    border: language === langOpt.code ? '1px solid var(--border-gold)' : '1px solid transparent',
+                    borderRadius: 'var(--radius-sm)',
+                    color: language === langOpt.code ? 'var(--text-gold)' : 'var(--text-primary)',
+                    fontSize: '0.82rem',
+                    fontWeight: language === langOpt.code ? 600 : 400,
+                    cursor: 'pointer',
+                    textAlign: 'center'
+                  }}
+                >
+                  {langOpt.nativeName}
+                </button>
+              ))}
+            </div>
+
             <button
               className={`mobile-nav-link ${currentView === 'home' ? 'active' : ''}`}
               onClick={() => handleNavClick('home')}
@@ -132,35 +233,35 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
               onClick={() => handleNavClick('submit')}
             >
               <Sparkles size={16} />
-              <span>Explore My Dream</span>
+              <span>{t.common.newDream}</span>
             </button>
             <button
               className={`mobile-nav-link ${currentView === 'symbols' ? 'active' : ''}`}
               onClick={() => handleNavClick('symbols')}
             >
               <BookOpen size={16} />
-              <span>Dream Symbols Dictionary</span>
+              <span>Dream Symbols</span>
             </button>
             <button
               className={`mobile-nav-link ${currentView === 'faq' ? 'active' : ''}`}
               onClick={() => handleNavClick('faq')}
             >
               <HelpCircle size={16} />
-              <span>Science & Methodology FAQ</span>
+              <span>Science & FAQ</span>
             </button>
             <button
               className={`mobile-nav-link ${currentView === 'community' ? 'active' : ''}`}
               onClick={() => handleNavClick('community')}
             >
               <Users size={16} />
-              <span>Community Wall</span>
+              <span>{t.common.community}</span>
             </button>
             <button
               className={`mobile-nav-link ${currentView === 'saved' ? 'active' : ''}`}
               onClick={() => handleNavClick('saved')}
             >
               <Bookmark size={16} />
-              <span>Saved Dreams ({savedCount})</span>
+              <span>{t.common.save} ({savedCount})</span>
             </button>
             <button
               className="mobile-nav-link"
@@ -170,7 +271,7 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, savedCo
               }}
             >
               <ShieldCheck size={16} />
-              <span>Audit & Provenance Report</span>
+              <span>Audit & Provenance</span>
             </button>
             <button
               className={`mobile-nav-link ${isAudioPlaying ? 'active' : ''}`}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { DreamSubmission } from '../../types/dream';
+import { useI18n } from '../../services/i18n/I18nContext';
 import {
   Sparkles,
   Lock,
@@ -92,6 +93,7 @@ const COLOR_SUGGESTIONS = [
 ];
 
 export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAnalyzing }) => {
+  const { t, language } = useI18n();
   // Step navigation (1: Story, 2: Emotions, 3: Motifs, 4: Context)
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
@@ -164,11 +166,11 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
   const validateAndNext = (nextStep: 1 | 2 | 3 | 4) => {
     if (currentStep === 1) {
       if (!description.trim()) {
-        setErrorMsg('Please describe what happened in your dream to continue.');
+        setErrorMsg(t.submit.requiredError);
         return;
       }
       if (description.trim().length < 15) {
-        setErrorMsg('Please share a few more details (at least 15 characters).');
+        setErrorMsg(t.submit.requiredError);
         return;
       }
     }
@@ -180,12 +182,12 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!description.trim()) {
-      setErrorMsg('Please enter your dream description before proceeding.');
+      setErrorMsg(t.submit.requiredError);
       setCurrentStep(1);
       return;
     }
     if (description.trim().length < 15) {
-      setErrorMsg('Please describe your dream with a bit more detail (at least 15 characters).');
+      setErrorMsg(t.submit.requiredError);
       setCurrentStep(1);
       return;
     }
@@ -207,7 +209,9 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
       userInterpretation: userInterpretation.trim() || undefined,
       culturalBackground: culturalBackground.trim() || undefined,
       privacy,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      language,
+      targetLanguage: language
     };
 
     onSubmit(submission);
@@ -221,9 +225,9 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
           <Feather size={14} className="text-gold" />
           <span>NOCTURNAL EXPLORATION & SYNTHESIS</span>
         </div>
-        <h1 className="submit-title">Describe Your Dream</h1>
+        <h1 className="submit-title">{t.submit.title}</h1>
         <p className="submit-sub">
-          Share your nocturnal experience. Somnithos examines documented historical traditions, peer-reviewed sleep psychology, and crafts an original reflection with generative dream artwork.
+          {t.submit.subtitle}
         </p>
 
         {/* Guided Step Navigation Bar */}
@@ -234,7 +238,7 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
             onClick={() => setCurrentStep(1)}
           >
             <span className="step-num">1</span>
-            <span className="step-title">The Story</span>
+            <span className="step-title">{t.steps.step1Short}</span>
           </button>
 
           <div className="step-connector"></div>
@@ -245,7 +249,7 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
             onClick={() => validateAndNext(2)}
           >
             <span className="step-num">2</span>
-            <span className="step-title">Emotions</span>
+            <span className="step-title">{t.steps.step2Short}</span>
           </button>
 
           <div className="step-connector"></div>
@@ -256,7 +260,7 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
             onClick={() => validateAndNext(3)}
           >
             <span className="step-num">3</span>
-            <span className="step-title">Memories & Motifs</span>
+            <span className="step-title">Motifs</span>
           </button>
 
           <div className="step-connector"></div>
@@ -267,7 +271,7 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
             onClick={() => validateAndNext(4)}
           >
             <span className="step-num">4</span>
-            <span className="step-title">Context & Privacy</span>
+            <span className="step-title">{t.submit.privacyLabel}</span>
           </button>
         </div>
 
@@ -306,23 +310,23 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
         {currentStep === 1 && (
           <div className="guided-step-pane step-pane-1">
             <div className="pane-header">
-              <div className="pane-step-counter">STEP 01 OF 04</div>
-              <h2 className="pane-heading">Tell us what happened.</h2>
+              <div className="pane-step-counter">01 / 04</div>
+              <h2 className="pane-heading">{t.submit.dreamTextLabel}</h2>
               <p className="pane-desc">
-                Write freely. Describe what occurred, where you were, who was there, and the atmosphere of the dream.
+                {t.submit.subtitle}
               </p>
             </div>
 
             {/* Title (Optional) */}
             <div className="form-group">
               <label htmlFor="dream-title" className="form-label">
-                Dream Title <span className="label-opt">(optional)</span>
+                {t.submit.dreamTitleLabel}
               </label>
               <input
                 id="dream-title"
                 type="text"
                 className="form-input"
-                placeholder="e.g., The Midnight Train Across the Sunken City"
+                placeholder={t.submit.dreamTitlePlaceholder}
                 value={title}
                 onChange={e => setTitle(e.target.value)}
               />
@@ -331,13 +335,13 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
             {/* Narrative Description (Required) */}
             <div className="form-group">
               <label htmlFor="dream-desc" className="form-label required">
-                Dream Narrative <span className="label-req">*</span>
+                {t.submit.dreamTextLabel} <span className="label-req">*</span>
               </label>
               <textarea
                 id="dream-desc"
                 className="form-textarea large-narrative-area"
                 rows={8}
-                placeholder="Describe what occurred in your dream. What did you see, do, and feel? What was the atmosphere, lighting, or setting? You can be as brief or detailed as you like..."
+                placeholder={t.submit.dreamTextPlaceholder}
                 value={description}
                 onChange={e => {
                   setDescription(e.target.value);
@@ -346,11 +350,11 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
               />
               <div className="textarea-footer">
                 <span className="char-hint">
-                  {description.length} characters {description.length >= 15 && '· Narrative ready'}
+                  {description.length} {t.submit.charCount}
                 </span>
                 <span className="privacy-pill">
                   <Lock size={12} />
-                  <span>Private by default · Processed locally</span>
+                  <span>{t.submit.privacyPrivateTitle}</span>
                 </span>
               </div>
             </div>
@@ -365,7 +369,7 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
                     onClick={() => handleSubmit()}
                     disabled={isAnalyzing}
                   >
-                    <span>Analyze Dream Now</span>
+                    <span>{isAnalyzing ? t.submit.submittingButton : t.submit.submitButton}</span>
                   </button>
                 )}
                 <button
@@ -373,7 +377,7 @@ export const DreamSubmitForm: React.FC<DreamSubmitFormProps> = ({ onSubmit, isAn
                   className="btn btn-primary next-step-btn"
                   onClick={() => validateAndNext(2)}
                 >
-                  <span>Continue: How Did It Feel?</span>
+                  <span>{t.common.next}</span>
                   <ArrowRight size={16} />
                 </button>
               </div>

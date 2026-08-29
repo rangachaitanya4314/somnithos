@@ -116,8 +116,12 @@ async function runResultExperienceTests() {
     for (const jargon of forbiddenJargon) {
       assert(!textToCheck.includes(jargon), `Result contains dense jargon: "${jargon}"`);
     }
+    
+    // Assert 3-4 short lines in simple reflection
+    const lines = (res.simpleReflection || '').split('\n').filter(Boolean);
+    assert(lines.length >= 3 && lines.length <= 5, `Expected 3-4 short lines, got ${lines.length}`);
   });
-  console.log('✓ PASS: Primary reflections strictly adhere to Simple Everyday English without academic jargon');
+  console.log('✓ PASS: Primary reflections strictly adhere to 3-4 short lines in Simple Everyday English without academic jargon');
 
   // ----------------------------------------------------
   // TEST 5: Zero Frightening Predictions Rule

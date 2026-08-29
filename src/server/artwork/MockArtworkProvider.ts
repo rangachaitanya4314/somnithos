@@ -40,11 +40,14 @@ export class MockArtworkProvider implements ArtworkProvider {
     const isDoor = spec.mustInclude.some(i => i.includes('door'));
     const isBirds = spec.mustInclude.some(i => i.includes('bird'));
     const isFish = spec.mustInclude.some(i => i.includes('fish'));
+    const isSchool = spec.mustInclude.some(i => i.includes('school') || i.includes('classroom') || i.includes('friend')) || spec.environment.toLowerCase().includes('school');
+    const isForest = spec.mustInclude.some(i => i.includes('forest') || i.includes('woods')) || spec.environment.toLowerCase().includes('forest');
+    const isWarmLight = spec.mustInclude.some(i => i.includes('warm light') || i.includes('light') || i.includes('lantern'));
 
     // Visual Palette
-    const bgGradStart = isOcean ? '#050c1a' : '#0c071e';
-    const bgGradMid = isOcean ? '#0c2444' : '#1e113a';
-    const bgGradEnd = isOcean ? '#031428' : '#070314';
+    const bgGradStart = isOcean ? '#050c1a' : isSchool ? '#0a0d18' : isForest ? '#040711' : '#0c071e';
+    const bgGradMid = isOcean ? '#0c2444' : isSchool ? '#1e1b4b' : isForest ? '#0f1f38' : '#1e113a';
+    const bgGradEnd = isOcean ? '#031428' : isSchool ? '#05070e' : isForest ? '#020409' : '#070314';
 
     const trainColor = isPurpleTrain ? '#7e22ce' : '#3b82f6';
     const trainGlow = isPurpleTrain ? '#a855f7' : '#60a5fa';
@@ -59,6 +62,11 @@ export class MockArtworkProvider implements ArtworkProvider {
           </linearGradient>
           <radialGradient id="oceanGlow" cx="50%" cy="40%" r="60%">
             <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.35" />
+            <stop offset="100%" stop-color="#000000" stop-opacity="0" />
+          </radialGradient>
+          <radialGradient id="warmLightGlow" cx="72%" cy="42%" r="45%">
+            <stop offset="0%" stop-color="#fef08a" stop-opacity="0.9" />
+            <stop offset="30%" stop-color="#f59e0b" stop-opacity="0.5" />
             <stop offset="100%" stop-color="#000000" stop-opacity="0" />
           </radialGradient>
           <linearGradient id="trainGrad" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -80,9 +88,10 @@ export class MockArtworkProvider implements ArtworkProvider {
 
         <!-- Background -->
         <rect width="900" height="600" fill="url(#bgGrad)" />
-        <rect width="900" height="600" fill="url(#oceanGlow)" />
+        ${isOcean ? '<rect width="900" height="600" fill="url(#oceanGlow)" />' : ''}
+        ${isForest && isWarmLight ? '<rect width="900" height="600" fill="url(#warmLightGlow)" />' : ''}
 
-        <!-- Deep Water Caustics / Rays -->
+        <!-- Deep Atmosphere Rays -->
         <path d="M100 0 L250 600 L180 600 Z" fill="#38bdf8" opacity="0.08" />
         <path d="M400 0 L550 600 L480 600 Z" fill="#38bdf8" opacity="0.06" />
         <path d="M700 0 L820 600 L760 600 Z" fill="#38bdf8" opacity="0.07" />
@@ -94,6 +103,59 @@ export class MockArtworkProvider implements ArtworkProvider {
             <polygon points="150,180 90,140 110,180 90,220" fill="#0284c7" opacity="0.6" />
             <!-- Eye -->
             <circle cx="420" cy="180" r="5" fill="#facc15" />
+          </g>
+        ` : ''}
+
+        ${isForest ? `
+          <!-- Dark Night Forest Trees & Lone Traveler -->
+          <g opacity="0.9">
+            <!-- Tree Trunks -->
+            <rect x="60" y="140" width="16" height="340" fill="#050711" />
+            <polygon points="68,90 20,240 116,240" fill="#061226" />
+            <rect x="180" y="180" width="22" height="300" fill="#050711" />
+            <polygon points="191,120 130,280 252,280" fill="#071833" />
+            <rect x="320" y="160" width="18" height="320" fill="#050711" />
+            <polygon points="329,100 270,260 388,260" fill="#061226" />
+            <rect x="800" y="120" width="26" height="360" fill="#050711" />
+            <polygon points="813,60 740,240 886,240" fill="#061226" />
+
+            <!-- Distant warm light beacon and pathway -->
+            <circle cx="650" cy="280" r="14" fill="#fef08a" filter="url(#glow)" />
+            <polygon points="650,280 400,500 550,500" fill="#f59e0b" opacity="0.25" />
+
+            <!-- Person Walking in Forest -->
+            <circle cx="460" cy="380" r="8" fill="#030509" />
+            <rect x="454" y="388" width="12" height="24" fill="#030509" />
+            <line x1="456" y1="412" x2="452" y2="430" stroke="#030509" stroke-width="4" />
+            <line x1="464" y1="412" x2="468" y2="430" stroke="#030509" stroke-width="4" />
+          </g>
+        ` : ''}
+
+        ${isSchool ? `
+          <!-- School Corridor & Friend Waiting Outside -->
+          <g transform="translate(60, 160)" opacity="0.95">
+            <!-- School building brick facade -->
+            <rect x="0" y="0" width="460" height="260" rx="8" fill="#1e1b4b" stroke="#312e81" stroke-width="3" />
+            
+            <!-- Classroom Windows -->
+            <rect x="30" y="40" width="70" height="70" rx="4" fill="#fef08a" opacity="0.4" stroke="#0f172a" stroke-width="2" />
+            <rect x="130" y="40" width="70" height="70" rx="4" fill="#38bdf8" opacity="0.7" stroke="#0f172a" stroke-width="2" />
+            <rect x="230" y="40" width="70" height="70" rx="4" fill="#fef08a" opacity="0.4" stroke="#0f172a" stroke-width="2" />
+            <rect x="330" y="40" width="70" height="70" rx="4" fill="#fef08a" opacity="0.4" stroke="#0f172a" stroke-width="2" />
+
+            <!-- Doorway outside to Courtyard -->
+            <rect x="520" y="40" width="140" height="220" rx="6" fill="#090d16" stroke="#b45309" stroke-width="2" />
+            <!-- Warm outside lamp -->
+            <circle cx="590" cy="20" r="16" fill="#fef08a" filter="url(#glow)" />
+            
+            <!-- Best Friend Waiting with Waving Silhouette -->
+            <g transform="translate(590, 120)">
+              <circle cx="0" cy="0" r="12" fill="#38bdf8" />
+              <rect x="-8" y="12" width="16" height="36" rx="4" fill="#38bdf8" />
+              <line x1="8" y1="20" x2="24" y2="4" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+              <line x1="-4" y1="48" x2="-6" y2="76" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+              <line x1="4" y1="48" x2="6" y2="76" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" />
+            </g>
           </g>
         ` : ''}
 
@@ -175,7 +237,7 @@ export class MockArtworkProvider implements ArtworkProvider {
           </g>
         ` : ''}
 
-        <!-- Water Mist Floor Overlay -->
+        <!-- Water / Ground Mist Floor Overlay -->
         <rect x="0" y="520" width="900" height="80" fill="#082f49" opacity="0.6" />
       </svg>
     `;

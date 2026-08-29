@@ -6449,6 +6449,795 @@ input, textarea, select {
   margin-bottom: 1rem;
 }
 
+/* =========================================================================
+   SOMNITHOS GUIDED 4-STAGE RESULT REDESIGN STYLES
+   ========================================================================= */
+
+.guided-result-root {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem 1rem;
+}
+
+.guided-header {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.guided-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.guided-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.guided-stage-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: rgba(8, 14, 28, 0.7);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(12px);
+}
+
+.stage-nav-arrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stage-nav-arrow:hover:not(:disabled) {
+  background: rgba(197, 160, 89, 0.15);
+  border-color: var(--border-gold);
+  color: var(--text-gold);
+}
+
+.stage-nav-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stage-dots-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stage-dot-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stage-dot-btn .stage-dot-number {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+}
+
+.stage-dot-btn.active {
+  background: rgba(197, 160, 89, 0.15);
+  border-color: var(--border-gold);
+  color: var(--text-gold);
+}
+
+.stage-dot-btn.active .stage-dot-number {
+  background: var(--text-gold);
+  color: #060a17;
+  font-weight: 700;
+}
+
+.stage-dot-btn.available:not(.active):hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stage-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stage-counter-badge {
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  background: rgba(197, 160, 89, 0.12);
+  border: 1px solid var(--border-gold);
+  color: var(--text-gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.current-stage-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+}
+
+/* Guided Main Card Container */
+.guided-main-card {
+  background: rgba(10, 16, 32, 0.75);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  padding: 2.5rem 2rem;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.stage-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.stage-fade-in {
+  animation: stageFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes stageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stage-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage-heading {
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.stage-lead-p {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Stage 1: Your Dream */
+.dream-hero-title {
+  font-size: 2.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.dream-wording-vitrine {
+  position: relative;
+  padding: 2rem 2.2rem;
+  background: rgba(4, 7, 18, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.vitrine-quote-icon {
+  margin-bottom: 0.75rem;
+  opacity: 0.85;
+}
+
+.dream-original-quote {
+  font-size: 1.15rem;
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.dream-original-quote.clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Stage 2: What Stood Out */
+.emotional-arc-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1.25rem;
+  background: rgba(197, 160, 89, 0.08);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+}
+
+.emotional-arc-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-gold);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.emotional-arc-pill {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.highlights-list-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.highlight-item-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.4rem;
+  background: rgba(6, 11, 24, 0.6);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.highlight-item-card:hover {
+  background: rgba(12, 20, 42, 0.75);
+  border-color: var(--border-gold);
+  transform: translateX(3px);
+}
+
+.highlight-emoji {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.highlight-text {
+  font-size: 1.02rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Stage 3: Simple Reflection */
+.single-reflection-card {
+  padding: 2.25rem 2rem;
+  background: rgba(6, 11, 24, 0.7);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow: 0 8px 32px rgba(197, 160, 89, 0.06);
+}
+
+.primary-reflection-text {
+  font-size: 1.25rem;
+  color: #f1f5f9;
+  line-height: 1.7;
+  font-weight: 450;
+  margin: 0;
+}
+
+.reflection-question-box {
+  padding: 1rem 1.25rem;
+  background: rgba(56, 189, 248, 0.06);
+  border-left: 3px solid #38bdf8;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.question-intro {
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.question-content {
+  font-size: 0.98rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.reflection-disclaimer-note {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Stage 4: Imagined & Explore More */
+.artwork-display-frame {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #020409;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8);
+}
+
+.rendered-artwork-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.artwork-loading-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.artwork-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  background: rgba(6, 11, 24, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.style-preset-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.style-dropdown {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.82rem;
+}
+
+.artwork-buttons-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.artwork-epistemic-disclaimer {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Explore More Hub */
+.explore-more-container {
+  margin-top: 1.5rem;
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.explore-more-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.explore-more-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.explore-more-desc {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.explore-choices-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.explore-choice-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem;
+  background: rgba(8, 14, 28, 0.7);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.explore-choice-card:hover {
+  background: rgba(14, 24, 48, 0.9);
+  border-color: var(--border-gold);
+  transform: translateY(-2px);
+}
+
+.choice-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.bg-cyan-subtle { background: rgba(56, 189, 248, 0.12); }
+.bg-gold-subtle { background: rgba(197, 160, 89, 0.12); }
+.bg-purple-subtle { background: rgba(168, 85, 247, 0.12); }
+.bg-emerald-subtle { background: rgba(52, 211, 153, 0.12); }
+
+.choice-text-wrap {
+  flex: 1;
+}
+
+.choice-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 0.25rem 0;
+}
+
+.choice-desc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.choice-arrow {
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.explore-choice-card:hover .choice-arrow {
+  transform: translateX(4px);
+  opacity: 1;
+}
+
+/* Stage Actions Footer */
+.stage-actions-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+.reveal-hint-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.stage-final-footer {
+  margin-top: 2rem;
+}
+
+/* Explore Modals Specific */
+.explore-modal-box {
+  max-width: 680px;
+  width: 92%;
+}
+
+.simple-science-intro, .beliefs-intro-box {
+  padding: 1.1rem 1.25rem;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.25rem;
+}
+
+.simple-science-intro h4 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #38bdf8;
+  margin: 0 0 0.35rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.simple-science-intro p, .beliefs-intro-box p {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.research-subheading {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 1.25rem 0 0.75rem 0;
+}
+
+.research-records-list, .beliefs-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.research-item-card, .belief-item-card {
+  padding: 1rem 1.2rem;
+  background: rgba(6, 11, 24, 0.65);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.research-item-header, .belief-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.research-concept-tag, .belief-tradition-tag {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-gold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.research-discipline-tag, .belief-period-tag {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.research-summary-text, .belief-claim-text {
+  font-size: 0.92rem;
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin: 0 0 0.5rem 0;
+}
+
+.research-citation-row, .belief-source-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.btn-link-view {
+  background: transparent;
+  border: none;
+  color: var(--text-gold);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-link-view:hover {
+  text-decoration: underline;
+}
+
+.no-sources-soft-card {
+  padding: 1.5rem;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.no-sources-soft-card p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.25rem 0;
+}
+
+.no-source-subtext {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Astrology Styles */
+.astrology-disclaimer-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: rgba(197, 160, 89, 0.08);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  color: var(--text-gold);
+  margin-bottom: 1.25rem;
+}
+
+.astrology-disclaimer-banner p {
+  margin: 0;
+}
+
+.astrology-birth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.astrology-prompt-text {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.astrology-result-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.astrology-tags-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.astro-tag {
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #d8b4fe;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.astrology-reading-p {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* Responsive Rules for Redesign */
+@media (max-width: 768px) {
+  .guided-main-card {
+    padding: 1.5rem 1.15rem;
+  }
+
+  .stage-heading {
+    font-size: 1.5rem;
+  }
+
+  .dream-hero-title {
+    font-size: 1.65rem;
+  }
+
+  .dream-wording-vitrine {
+    padding: 1.25rem;
+  }
+
+  .explore-choices-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hide-mobile {
+    display: none;
+  }
+
+  .stage-actions-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .stage-actions-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .guided-result-root {
+    padding: 1rem 0.5rem 3rem 0.5rem;
+  }
+
+  .guided-stage-nav {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .emotional-arc-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+}
+
 /* Responsive Rules */
 @media (max-width: 768px) {
   .community-posts-grid {
@@ -6474,6 +7263,3 @@ input, textarea, select {
     justify-content: flex-end;
   }
 }
-
-
-

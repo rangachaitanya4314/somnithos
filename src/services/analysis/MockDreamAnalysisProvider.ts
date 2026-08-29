@@ -177,6 +177,110 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
       unusualEvents.add('Unassisted flight / levitation');
     }
 
+    // =========================================================================
+    // REDESIGNED NARRATIVE EXTRACTION: Meaningful Highlights & Emotional Journey
+    // =========================================================================
+    const meaningfulHighlights: { emoji: string; text: string }[] = [];
+    let emotionalJourney = '';
+
+    // Situation 1: Dark forest -> fear -> warm light -> calm
+    if ((text.includes('forest') || text.includes('woods')) && (text.includes('light') || text.includes('lantern') || text.includes('warm'))) {
+      meaningfulHighlights.push({ emoji: '🌲', text: 'You were in a dark forest.' });
+      if (text.includes('scared') || text.includes('afraid') || text.includes('fear')) {
+        meaningfulHighlights.push({ emoji: '😟', text: 'You felt scared at first.' });
+      }
+      if (text.includes('warm light') || text.includes('light in the distance') || text.includes('light')) {
+        meaningfulHighlights.push({ emoji: '💡', text: 'Then you saw a warm light in the distance.' });
+      }
+      if (text.includes('calm') || text.includes('peace') || text.includes('safe') || text.includes('relieved')) {
+        meaningfulHighlights.push({ emoji: '😌', text: 'You felt calm afterward.' });
+      }
+      emotionalJourney = 'Fear → Warm Light → Calm';
+    }
+    // Situation 2: Purple train underwater -> huge fish -> silent passengers
+    else if (text.includes('train') && (text.includes('ocean') || text.includes('underwater') || text.includes('sea'))) {
+      if (text.includes('purple') || text.includes('violet')) {
+        meaningfulHighlights.push({ emoji: '💜', text: 'You were inside a purple train moving under the ocean.' });
+      } else {
+        meaningfulHighlights.push({ emoji: '🚆', text: 'You were traveling inside an underwater train.' });
+      }
+      if (text.includes('fish') || text.includes('creature')) {
+        meaningfulHighlights.push({ emoji: '🐟', text: 'Huge blue fish were swimming outside the windows.' });
+      }
+      if (text.includes('silent') || text.includes('quiet') || text.includes('passenger')) {
+        meaningfulHighlights.push({ emoji: '🤫', text: 'Everyone around was silent and calm.' });
+      }
+      if (text.includes('door') || text.includes('forest') || text.includes('clock')) {
+        meaningfulHighlights.push({ emoji: '🚪', text: 'You encountered an unexpected threshold between water and land.' });
+      }
+      emotionalJourney = 'Surreal wonder → Quiet stillness';
+    }
+    // Situation 3: Old school -> couldn't find classroom -> nervousness -> friend waiting -> relief
+    else if (text.includes('school') || text.includes('classroom') || text.includes('exam') || text.includes('hallway')) {
+      meaningfulHighlights.push({ emoji: '🏫', text: 'You were standing in your old school.' });
+      if (text.includes('could not find') || text.includes("couldn't find") || text.includes('lost') || text.includes('searching')) {
+        meaningfulHighlights.push({ emoji: '🔍', text: 'You were searching for your classroom and could not find it.' });
+      }
+      if (text.includes('nervous') || text.includes('anxious') || text.includes('worried') || text.includes('stressed')) {
+        meaningfulHighlights.push({ emoji: '😟', text: 'You felt nervous and disoriented.' });
+      }
+      if (text.includes('friend') || text.includes('best friend') || text.includes('waiting')) {
+        meaningfulHighlights.push({ emoji: '🤝', text: 'Then you found your best friend waiting for you outside.' });
+      }
+      emotionalJourney = 'Nervousness → Relief and connection';
+    }
+    // Situation 4: Flying over ocean / sky
+    else if (text.includes('fly') || text.includes('flying') || text.includes('floating')) {
+      meaningfulHighlights.push({ emoji: '🕊️', text: 'You were floating weightlessly above the ground.' });
+      if (text.includes('ocean') || text.includes('sea') || text.includes('water')) {
+        meaningfulHighlights.push({ emoji: '🌊', text: 'An expansive open ocean stretched beneath you.' });
+      }
+      if (text.includes('moon') || text.includes('night') || text.includes('stars')) {
+        meaningfulHighlights.push({ emoji: '🌙', text: 'You moved through the quiet atmosphere of night.' });
+      }
+      if (text.includes('peace') || text.includes('wonder') || text.includes('joy')) {
+        meaningfulHighlights.push({ emoji: '✨', text: 'You felt a deep sense of lightness and clarity.' });
+      }
+      emotionalJourney = 'Release → Expansive freedom';
+    }
+    // Generic dynamic fallback: construct 3-4 natural observations from extracted details
+    else {
+      // 1. Setting/Location
+      const loc = Array.from(detectedLocations)[0] || (detectedSymbols.has('forest') ? 'forest' : detectedSymbols.has('water') ? 'open waters' : 'an unfamiliar space');
+      meaningfulHighlights.push({ emoji: '🌌', text: `You found yourself in ${loc.replace('_', ' ')}.` });
+
+      // 2. Objects / actions
+      const mainSymbols = Array.from(detectedSymbols);
+      if (mainSymbols.length > 0) {
+        const readableSym = mainSymbols.slice(0, 2).map(s => s.replace('_', ' ')).join(' and ');
+        meaningfulHighlights.push({ emoji: '🧭', text: `You encountered ${readableSym} moving through the scene.` });
+      }
+
+      // 3. Emotions & mood
+      const emos = Array.from(detectedEmotions);
+      if (emos.length > 0) {
+        meaningfulHighlights.push({ emoji: '💭', text: `The atmosphere stirred feelings of ${emos.join(' and ')}.` });
+        emotionalJourney = emos.join(' → ');
+      } else {
+        meaningfulHighlights.push({ emoji: '🕊️', text: 'You experienced a calm, reflective state of mind.' });
+        emotionalJourney = 'Contemplation → Awakening';
+      }
+    }
+
+    // Construct simple everyday reflection
+    let simpleReflection = '';
+    if (emotionalJourney.toLowerCase().includes('fear') && emotionalJourney.toLowerCase().includes('calm')) {
+      simpleReflection = 'You may be dealing with something that feels uncertain in waking life, while also looking for something that makes you feel safe or calm.';
+    } else if (text.includes('school') || text.includes('friend')) {
+      simpleReflection = 'You might be reflecting on past expectations or pressures, while finding comfort in the people or memories that bring you genuine support.';
+    } else if (text.includes('train') || text.includes('underwater')) {
+      simpleReflection = 'You may be quietly navigating a unique transition in your thoughts, observing deep feelings beneath the surface without rushing.';
+    } else if (detectedSymbols.has('flying')) {
+      simpleReflection = 'You might be seeking a fresh perspective on waking challenges, giving yourself permission to rise above daily worries.';
+    } else {
+      simpleReflection = 'One possible way to look at it is that your mind is organizing everyday experiences, balancing what feels unfamiliar with what brings you comfort.';
+    }
+
     // Separate dominant vs secondary motifs
     const symbolsArray = Array.from(detectedSymbols);
     const dominantMotifs = symbolsArray.slice(0, 3);
@@ -200,6 +304,10 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
       detectedColors: Array.from(detectedColors),
       detectedThemes: Array.from(detectedThemes),
       possibleRecurringPatterns: input.recurringElements ? [input.recurringElements] : undefined,
+      meaningfulHighlights: meaningfulHighlights.slice(0, 4),
+      meaningfulDetails: meaningfulHighlights.map(h => h.text),
+      emotionalJourney: emotionalJourney || 'Observation → Reflection',
+      simpleReflection,
       motifsWhyNoticed,
       ambiguityLevel,
       daytimeResidueProbability
@@ -387,6 +495,46 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
   }
 
   /**
+   * 7.5. OPTIONAL ASTROLOGY LAYER (Traditional Belief System - Not Scientific)
+   */
+  public generateAstrologyReading(input: DreamInput, features: DreamFeatures): {
+    element?: string;
+    planetaryTheme?: string;
+    reading: string;
+    disclaimer: string;
+  } {
+    const text = (input.narrative + ' ' + (input.title || '')).toLowerCase();
+    let element = 'Air';
+    let planetaryTheme = 'Mercury (Thoughts & Communication)';
+    let reading = 'In traditional astrology, this dream reflects mental curiosity, active thoughts, and processing daily connections.';
+
+    if (text.includes('ocean') || text.includes('water') || text.includes('fish') || text.includes('sea') || features.detectedSymbols.includes('water')) {
+      element = 'Water';
+      planetaryTheme = 'Neptune & The Moon (Emotion, Intuition & The Subconscious)';
+      reading = 'In traditional astrology, water dreams connect with emotional currents and intuitive awareness. The symbolism suggests paying gentle attention to quiet feelings that are ready to be felt.';
+    } else if (text.includes('forest') || text.includes('tree') || text.includes('earth') || text.includes('school') || text.includes('door')) {
+      element = 'Earth';
+      planetaryTheme = 'Saturn & Venus (Structure, Stability & Relationships)';
+      reading = 'In traditional astrology, earth and structure motifs relate to practical foundations, patience, and recognizing the grounding presence of trusted companions.';
+    } else if (text.includes('fire') || text.includes('flame') || text.includes('light') || text.includes('sun') || features.detectedSymbols.includes('fire')) {
+      element = 'Fire';
+      planetaryTheme = 'The Sun & Mars (Clarity, Vitality & Courage)';
+      reading = 'In traditional astrology, luminous lights and warm glows symbolize renewed motivation and courage emerging after a period of uncertainty.';
+    } else if (features.detectedSymbols.includes('flying') || text.includes('flying') || text.includes('bird')) {
+      element = 'Air';
+      planetaryTheme = 'Jupiter & Uranus (Perspective, Freedom & New Horizons)';
+      reading = 'In traditional astrology, flight corresponds with the expansion of perspective, inviting you to see your situation from a higher, lighter vantage point.';
+    }
+
+    return {
+      element,
+      planetaryTheme,
+      reading,
+      disclaimer: 'Astrology is a traditional belief system. It is not scientific evidence.'
+    };
+  }
+
+  /**
    * 8. FULL END-TO-END PIPELINE EXECUTION
    */
   public analyzeDream(rawInput: DreamInput): DreamAnalysisResult {
@@ -440,7 +588,10 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
     // Step 10: Step 2 Provenance Claim Records
     const claims = this.evidenceRetriever.findSupportingClaims(extractedFeatures.detectedSymbols);
 
-    const methodologyNotes = 'Somnithos separates audited historical/scientific evidence (World 1) from non-dogmatic personal and creative reflections (World 2). If no reliable historical record exists, the system states "No reliable source found" rather than fabricating a tradition.';
+    // Step 11: Astrology Layer (Optional traditional belief system)
+    const astrologyReading = this.generateAstrologyReading(input, extractedFeatures);
+
+    const methodologyNotes = 'Somnithos separates audited historical/scientific evidence (World 1) from non-dogmatic personal and creative reflections (World 2). If no reliable historical record exists, the system states "No trusted source found for this idea." rather than fabricating a tradition.';
 
     return {
       id: 'analysis-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
@@ -463,6 +614,8 @@ export class MockDreamAnalysisProvider implements DreamAnalysisProvider {
       closingThought,
       verifiedQuoteMatch,
       claims,
+      simpleReflection: extractedFeatures.simpleReflection || personalReflection.primarySynthesis,
+      astrologyReading,
       methodologyNotes
     };
   }

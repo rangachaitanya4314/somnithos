@@ -23,6 +23,8 @@ export type SourceType = DomainSourceType;
 export type EpistemicCategory = DomainEpistemicCategory;
 export type VerificationStatus = DomainVerificationStatus;
 export type VerifiedSourceRecord = DomainVerifiedSourceRecord;
+export type { EvidenceRecord } from '../domain/evidence/EvidenceRecord';
+export type { ResearchRecord } from '../domain/research/ResearchRecord';
 export type FactualKnowledgeClaim = EvidenceRecord;
 export type PsychologyTheoryClaim = ResearchRecord;
 export type CulturalPerspectiveMatch = EvidenceRecordMatch;
@@ -104,8 +106,14 @@ export interface DreamAnalysisResult {
     styleTheme: string;
     title: string;
     label: string; // "Your Dream — Imagined"
-    subLabel: string; // "An artistic visualization inspired by your description."
     visualKeywords: string[];
+  };
+  simpleReflection?: string;
+  astrologyReading?: {
+    element?: string;
+    planetaryTheme?: string;
+    reading: string;
+    disclaimer: string;
   };
   methodologyNotes?: string;
 }

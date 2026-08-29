@@ -94,7 +94,7 @@ export class AnalysisValidationLayer {
       }
     }
 
-    // 4. Validate Personal Reflection Phrasing (World 2)
+    // 4. Validate Personal Reflection Phrasing & Simple English (World 2)
     let personalReflection = rawResult.personalReflection || (rawResult.personalInterpretation as any) || {
       title: 'Exploratory Perspectives',
       narrativeArcs: ['The narrative moves from one state of awareness to another.'],
@@ -115,6 +115,59 @@ export class AnalysisValidationLayer {
       });
     }
 
+    // 4.5. STRICT RULE: NO FRIGHTENING PREDICTIONS & SIMPLE ENGLISH SANITIZATION
+    const forbiddenFrighteningWords = [
+      'predicts death', 'predicts your death', 'someone will die', 'fatal illness',
+      'fatal disease', 'impending catastrophe', 'future disaster', 'physical harm will occur',
+      'you will get sick', 'someone is going to die', 'portends death', 'omen of death'
+    ];
+
+    const sanitizeFrighteningLanguage = (text: string): string => {
+      let sanitized = text;
+      for (const phrase of forbiddenFrighteningWords) {
+        if (sanitized.toLowerCase().includes(phrase)) {
+          violations.push(`Detected forbidden frightening prediction: "${phrase}". Sanitized.`);
+          sanitized = sanitized.replace(new RegExp(phrase, 'gi'), 'a transition or period of change');
+        }
+      }
+      return sanitized;
+    };
+
+    // Simple English replacements for dense academic jargon
+    const jargonReplacements: [string[], string][] = [
+      [['neurochemical recalibration'], 'natural brain processing during sleep'],
+      [['affect regulation'], 'emotional processing'],
+      [['cognitive schemas'], 'mental habits and thought patterns'],
+      [['epistemic traditions'], 'historical perspectives'],
+      [['autobiographical memory traces', 'autobiographical memory trace'], 'memory of personal experience'],
+      [['associative recombination'], 'creative mixing of ideas in sleep'],
+      [['phenomenological'], 'lived personal'],
+      [['ontological'], 'fundamental']
+    ];
+
+    const sanitizeAcademicJargon = (text: string): string => {
+      let sanitized = text;
+      for (const [terms, replacement] of jargonReplacements) {
+        if (terms.some((a: string) => sanitized.toLowerCase().includes(a))) {
+          for (const term of terms) {
+            const reg = new RegExp(term, 'gi');
+            sanitized = sanitized.replace(reg, replacement);
+          }
+        }
+      }
+      return sanitized;
+    };
+
+    if (personalReflection.primarySynthesis) {
+      personalReflection.primarySynthesis = sanitizeAcademicJargon(sanitizeFrighteningLanguage(personalReflection.primarySynthesis));
+    }
+    if (personalReflection.narrativeArcs) {
+      personalReflection.narrativeArcs = personalReflection.narrativeArcs.map((a: string) => sanitizeAcademicJargon(sanitizeFrighteningLanguage(a)));
+    }
+
+    let simpleReflection = rawResult.simpleReflection || extractedFeatures.simpleReflection || personalReflection.primarySynthesis || 'One possible way to look at it is that your mind is organizing everyday feelings and memories in a calm, reflective space.';
+    simpleReflection = sanitizeAcademicJargon(sanitizeFrighteningLanguage(simpleReflection));
+
     // 5. Validate Creative Reflection Labeling (World 2)
     let creativeReflection = rawResult.creativeReflection || (rawResult.originalReflection as any) || {
       message: 'A dream is a door the mind leaves open between the waking day and the quiet night.',
@@ -125,6 +178,9 @@ export class AnalysisValidationLayer {
     };
     creativeReflection.label = 'Original reflection inspired by your dream.';
     creativeReflection.isAIGenerated = true;
+    if (creativeReflection.message) {
+      creativeReflection.message = sanitizeFrighteningLanguage(creativeReflection.message);
+    }
 
     // 6. Validate Artwork Prompt Detail Preservation
     let artworkPrompt = rawResult.artworkPrompt || (rawResult.dreamArtwork as any);
@@ -187,6 +243,13 @@ export class AnalysisValidationLayer {
       fallbackMessage: 'No reliable source found for this specific claim.'
     };
 
+    const astrologyReading = rawResult.astrologyReading || {
+      element: 'Air',
+      planetaryTheme: 'Mercury (Reflection & Thought)',
+      reading: 'In traditional astrology, dreams often symbolize thoughts and perceptions seeking integration.',
+      disclaimer: 'Astrology is a traditional belief system. It is not scientific evidence.'
+    };
+
     const sanitizedResult: DreamAnalysisResult = {
       id: rawResult.id || 'analysis-' + Date.now() + '-' + Math.random().toString(36).substr(2, 6),
       submissionId: input.id || rawResult.submissionId || 'submission-' + Date.now(),
@@ -208,6 +271,8 @@ export class AnalysisValidationLayer {
       closingThought,
       verifiedQuoteMatch: rawResult.verifiedQuoteMatch,
       claims: verifiedClaims,
+      simpleReflection,
+      astrologyReading,
       methodologyNotes: 'Somnithos separates audited historical/scientific evidence (World 1) from non-dogmatic personal and creative reflections (World 2). Gemini is used exclusively as a synthesis engine; factual claims are grounded strictly in the audited evidence catalog.'
     };
 

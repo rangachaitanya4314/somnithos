@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type {
   DreamSubmission,
-  DreamAnalysisResult
+  DreamAnalysisResult,
+  EvidenceRecord,
+  ResearchRecord
 } from '../../types/dream';
-import { EvidenceBadge } from '../common/EvidenceBadge';
 import { SourceViewerModal } from './SourceViewerModal';
 import type { SourceViewerTarget } from './SourceViewerModal';
 import { AuditReportModal } from '../common/AuditReportModal';
@@ -15,29 +16,25 @@ import {
   Sparkles,
   ShieldCheck,
   Brain,
-  History,
-  BookOpen,
   Palette,
   Download,
   Bookmark,
   Share2,
-  AlertTriangle,
   RefreshCw,
-  Compass,
-  Check,
-  Copy,
-  Info,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   ChevronUp,
   FileCheck,
-  Cpu,
-  Eye,
-  Scroll,
-  Feather,
   Quote,
+  Compass,
+  X,
+  Calendar,
+  Clock,
+  MapPin,
+  BookOpen,
   ArrowRight,
-  HelpCircle
+  Users
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -48,32 +45,60 @@ interface DreamAnalysisViewProps {
   onViewCommunity: () => void;
 }
 
+type StageNumber = 1 | 2 | 3 | 4;
+
+type ExploreCategory = 'research' | 'beliefs' | 'astrology' | 'patterns' | null;
+
 export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
   submission,
   analysis,
   onNewDream,
   onViewCommunity
 }) => {
-  const [activeSection, setActiveSection] = useState<string>('narrative');
+  const [currentStage, setCurrentStage] = useState<StageNumber>(1);
+  const [unlockedStage, setUnlockedStage] = useState<StageNumber>(1);
+  const [exploreModal, setExploreModal] = useState<ExploreCategory>(null);
   const [sourceModalTarget, setSourceModalTarget] = useState<SourceViewerTarget | null>(null);
   const [isAuditModalOpen, setIsAuditModalOpen] = useState<boolean>(false);
   const [currentStylePreset, setCurrentStylePreset] = useState<string>('nocturne');
-  const [selectedProvider, setSelectedProvider] = useState<ImageProviderType>('real_ai');
+  const [selectedProvider] = useState<ImageProviderType>('real_ai');
   const [artDataUrl, setArtDataUrl] = useState<string>('');
   const [isGeneratingArt, setIsGeneratingArt] = useState<boolean>(false);
   const [variationSeed, setVariationSeed] = useState<number>(0);
-  const [artworkMetadata, setArtworkMetadata] = useState<{ isFallback: boolean; notes: string } | null>(null);
   const [isSaved, setIsSaved] = useState<boolean>(false);
   const [isPublished, setIsPublished] = useState<boolean>(false);
-  const [copiedQuote, setCopiedQuote] = useState<boolean>(false);
-  const [showPromptDetails, setShowPromptDetails] = useState<boolean>(false);
   const [isNarrativeExpanded, setIsNarrativeExpanded] = useState<boolean>(false);
-  const [showContextDetails, setShowContextDetails] = useState<boolean>(false);
-  const [selectedMotifDetail, setSelectedMotifDetail] = useState<string | null>(null);
+
+  // Astrology form inputs
+  const [birthDate, setBirthDate] = useState<string>('');
+  const [birthTime, setBirthTime] = useState<string>('');
+  const [birthPlace, setBirthPlace] = useState<string>('');
+  const [astrologyResult, setAstrologyResult] = useState<{
+    element: string;
+    signEstimate?: string;
+    planetaryTheme: string;
+    reading: string;
+  } | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Render artistic dream visualization via modular ImageGenerationService
+  // Natural reveal progression (0s -> ~2s -> ~4s)
+  useEffect(() => {
+    const timer1 = setTimeout(() => {
+      setUnlockedStage(prev => (prev < 2 ? 2 : prev));
+    }, 1600);
+
+    const timer2 = setTimeout(() => {
+      setUnlockedStage(prev => (prev < 3 ? 3 : prev));
+    }, 3200);
+
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, []);
+
+  // Render artwork
   useEffect(() => {
     let isCancelled = false;
     const generate = async () => {
@@ -90,7 +115,7 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
 
         if (!isCancelled) {
           setArtDataUrl(res.imageUrl);
-          setArtworkMetadata({ isFallback: res.isFallback, notes: res.notes });
+          setUnlockedStage(4);
         }
       } catch (err) {
         console.warn('Artwork generation error:', err);
@@ -124,7 +149,6 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
         canvasTarget: canvasRef.current || undefined
       });
       setArtDataUrl(res.imageUrl);
-      setArtworkMetadata({ isFallback: res.isFallback, notes: res.notes });
     } catch (err) {
       console.warn('Regeneration error:', err);
     } finally {
@@ -172,839 +196,804 @@ export const DreamAnalysisView: React.FC<DreamAnalysisViewProps> = ({
     document.body.removeChild(a);
   };
 
-  const handleCopyReflection = () => {
-    navigator.clipboard.writeText(
-      `"${analysis.originalReflection.message}"\n\n— Original reflection inspired by your dream | Somnithos`
-    );
-    setCopiedQuote(true);
-    setTimeout(() => setCopiedQuote(false), 2500);
+  const handleCalculateAstrology = (e: React.FormEvent) => {
+    e.preventDefault();
+    let sign = 'Aries';
+    let element = 'Fire';
+    let planetaryTheme = 'Mars & The Sun (Action & Awakening)';
+
+    if (birthDate) {
+      const month = new Date(birthDate).getMonth() + 1;
+      const day = new Date(birthDate).getDate();
+
+      if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) { sign = 'Aries'; element = 'Fire'; planetaryTheme = 'Mars (Courage & Vitality)'; }
+      else if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) { sign = 'Taurus'; element = 'Earth'; planetaryTheme = 'Venus (Grounded Harmony)'; }
+      else if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) { sign = 'Gemini'; element = 'Air'; planetaryTheme = 'Mercury (Curiosity & Connection)'; }
+      else if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) { sign = 'Cancer'; element = 'Water'; planetaryTheme = 'The Moon (Memory & Emotion)'; }
+      else if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) { sign = 'Leo'; element = 'Fire'; planetaryTheme = 'The Sun (Identity & Warmth)'; }
+      else if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) { sign = 'Virgo'; element = 'Earth'; planetaryTheme = 'Mercury (Order & Discernment)'; }
+      else if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) { sign = 'Libra'; element = 'Air'; planetaryTheme = 'Venus (Balance & Relationships)'; }
+      else if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) { sign = 'Scorpio'; element = 'Water'; planetaryTheme = 'Pluto & Mars (Transformation)'; }
+      else if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) { sign = 'Sagittarius'; element = 'Fire'; planetaryTheme = 'Jupiter (Expansive Perspective)'; }
+      else if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) { sign = 'Capricorn'; element = 'Earth'; planetaryTheme = 'Saturn (Structure & Endurance)'; }
+      else if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) { sign = 'Aquarius'; element = 'Air'; planetaryTheme = 'Uranus (Originality & Vision)'; }
+      else { sign = 'Pisces'; element = 'Water'; planetaryTheme = 'Neptune (The Subconscious & Intuition)'; }
+    }
+
+    const narrative = (submission.description || '').toLowerCase();
+    let dreamCorrespondence = `In traditional astrology, your ${sign} (${element} element) energy interacts with the nocturnal themes of your dream. `;
+    if (narrative.includes('water') || narrative.includes('ocean') || narrative.includes('fish')) {
+      dreamCorrespondence += 'Water elements suggest an emphasis on processing deep, intuitive feelings in a quiet, unhurried space.';
+    } else if (narrative.includes('forest') || narrative.includes('tree') || narrative.includes('school') || narrative.includes('friend')) {
+      dreamCorrespondence += 'Grounding and relational themes suggest paying attention to stable routines and the people who make you feel secure.';
+    } else if (narrative.includes('light') || narrative.includes('fire')) {
+      dreamCorrespondence += 'Light imagery resonates with finding a renewed sense of direction or personal clarity.';
+    } else {
+      dreamCorrespondence += 'The symbolism indicates a time for gentle reflection and aligning your waking focus with what matters most to you.';
+    }
+
+    setAstrologyResult({
+      signEstimate: sign,
+      element,
+      planetaryTheme,
+      reading: dreamCorrespondence
+    });
   };
 
-  const scrollToSection = (sectionId: string) => {
-    setActiveSection(sectionId);
-    const element = document.getElementById(`section-${sectionId}`);
-    if (element) {
-      const offset = 90;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: 'smooth'
-      });
-    }
+  const stageTitles: Record<StageNumber, string> = {
+    1: 'YOUR DREAM',
+    2: 'WHAT STOOD OUT',
+    3: 'ONE POSSIBLE WAY TO LOOK AT IT',
+    4: 'YOUR DREAM — IMAGINED'
   };
 
-  // Generate grounded questions to consider from dream features
-  const getReflectionQuestions = (): string[] => {
-    const questions: string[] = [];
-    const motifs = analysis.extractedFeatures.dominantMotifs || analysis.extractedFeatures.detectedSymbols || [];
-    const emotions = analysis.extractedFeatures.emotionalSignals || analysis.extractedFeatures.detectedEmotions || [];
+  const highlights = analysis.extractedFeatures.meaningfulHighlights || [
+    { emoji: '🌌', text: 'You were navigating a distinctive nocturnal setting.' },
+    { emoji: '💭', text: `You experienced emotions of ${analysis.extractedFeatures.emotionalSignals.join(' and ') || 'reflection'}.` },
+    { emoji: '🕊️', text: 'Your mind moved through a meaningful transition.' }
+  ];
 
-    if (motifs.includes('water') || motifs.includes('ocean')) {
-      questions.push('What was the quality of the water—still, turbulent, or luminous—and did it reflect how you currently navigate changes in waking life?');
-    }
-    if (motifs.includes('flying') || motifs.includes('falling')) {
-      questions.push('When your perspective shifted in altitude or gravity, did you feel a sense of release, loss of control, or heightened clarity?');
-    }
-    if (motifs.includes('doors') || motifs.includes('train') || motifs.includes('portal')) {
-      questions.push('As you approached the threshold or vehicle, what feeling accompanied the transition to what lay on the other side?');
-    }
-    if (emotions.length > 0) {
-      questions.push(`The feelings of ${emotions.slice(0, 2).join(' and ')} appeared distinctly in your narrative. Where in your waking life have similar feelings surfaced recently?`);
-    }
+  const emotionalJourney = analysis.extractedFeatures.emotionalJourney || 
+    (analysis.extractedFeatures.emotionalSignals.length > 1 
+      ? analysis.extractedFeatures.emotionalSignals.join(' → ') 
+      : 'Observation → Quiet Awareness');
 
-    questions.push('What part of the dream stayed with you longest upon waking?');
-    return questions.slice(0, 3);
-  };
+  const simpleReflection = analysis.simpleReflection || 
+    analysis.personalReflection?.primarySynthesis || 
+    'One possible way to look at it is that your mind is organizing everyday experiences and feelings in a calm, reflective space.';
 
-  const reflectionQuestions = getReflectionQuestions();
   const descriptionText = submission.description || '';
-  const isLongDescription = descriptionText.length > 320;
+  const isLongDescription = descriptionText.length > 280;
+
+  const scientificStudies = analysis.scientificResearch || [];
+  const historicalEvidence = analysis.historicalEvidence || [];
 
   return (
-    <div className="dream-analysis-root container">
-      {/* 1. Result Header */}
-      <header className="analysis-header">
-        <div className="analysis-top-nav-row">
+    <div className="guided-result-root container">
+      {/* Top Meta Bar */}
+      <header className="guided-header">
+        <div className="guided-header-top">
           <div className="somnithos-pill">
             <Sparkles size={14} className="text-gold" />
-            <span>SOMNITHOS SYNTHESIS · RESULT JOURNEY</span>
+            <span>SOMNITHOS GUIDED EXPERIENCE</span>
           </div>
 
-          <div className="analysis-meta-right">
+          <div className="guided-header-actions">
             <button
               className="audit-badge-trigger-btn"
               onClick={() => setIsAuditModalOpen(true)}
               title="Inspect system provenance and dataset verification audit"
             >
               <FileCheck size={14} className="text-gold" />
-              <span>Provenance & Audit Report</span>
+              <span>Audit & Provenance</span>
             </button>
-            <span className="analysis-timestamp">
-              {new Date(analysis.createdAt).toLocaleDateString(undefined, {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              })}
-            </span>
+
+            <button className="btn btn-ghost btn-sm" onClick={onViewCommunity}>
+              <Users size={14} />
+              <span>Community</span>
+            </button>
+
+            <button className="btn btn-ghost btn-sm" onClick={onNewDream}>
+              <RefreshCw size={14} />
+              <span>New Dream</span>
+            </button>
           </div>
         </div>
 
-        <h1 className="analysis-dream-title">
-          {submission.title || 'Nocturnal Dream Experience'}
-        </h1>
+        {/* Guided Stage Tracker */}
+        <div className="guided-stage-nav" role="navigation" aria-label="Dream Exploration Stages">
+          <button
+            className="stage-nav-arrow"
+            onClick={() => setCurrentStage(prev => (Math.max(1, prev - 1) as StageNumber))}
+            disabled={currentStage === 1}
+            aria-label="Previous stage"
+          >
+            <ChevronLeft size={18} />
+            <span className="hide-mobile">Back</span>
+          </button>
 
-        <p className="analysis-intro-lead">
-          Here&apos;s what Somnithos found in your dream. Below is an exploration of elements observed in your narrative, contextualized through documented historical traditions, modern sleep research, and personal creative reflection.
-        </p>
+          <div className="stage-dots-container">
+            {([1, 2, 3, 4] as StageNumber[]).map(s => {
+              const isCurrent = currentStage === s;
+              const isAvailable = s <= unlockedStage;
+              return (
+                <button
+                  key={s}
+                  className={`stage-dot-btn ${isCurrent ? 'active' : ''} ${isAvailable ? 'available' : 'locked'}`}
+                  onClick={() => setCurrentStage(s)}
+                  aria-label={`Go to Stage ${s}: ${stageTitles[s]}`}
+                >
+                  <span className="stage-dot-number">{s}</span>
+                  <span className="stage-dot-label hide-mobile">{stageTitles[s]}</span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Extracted Emotions & Tonal Chips */}
-        <div className="dream-emotions-row">
-          {analysis.extractedFeatures.detectedEmotions.map((emo, idx) => (
-            <span key={idx} className="dream-emotion-chip">
-              <Sparkles size={12} className="text-gold" />
-              <span>{emo}</span>
-            </span>
-          ))}
-          {analysis.extractedFeatures.detectedEmotions.length === 0 && (
-            <span className="dream-emotion-chip subtle">
-              <span>Reflective Nocturne</span>
-            </span>
-          )}
+          <button
+            className="stage-nav-arrow"
+            onClick={() => setCurrentStage(prev => (Math.min(4, prev + 1) as StageNumber))}
+            disabled={currentStage === 4}
+            aria-label="Next stage"
+          >
+            <span className="hide-mobile">Next</span>
+            <ChevronRight size={18} />
+          </button>
         </div>
 
-        {/* Primary Action Buttons */}
-        <div className="analysis-actions-row">
-          <button
-            className={`btn ${isSaved ? 'btn-saved' : 'btn-secondary'}`}
-            onClick={handleSaveDream}
-            disabled={isSaved}
-          >
-            {isSaved ? (
-              <>
-                <Check size={16} />
-                <span>Archived in My Dreams</span>
-              </>
-            ) : (
-              <>
-                <Bookmark size={16} />
-                <span>Save to Dream Archive</span>
-              </>
-            )}
-          </button>
-
-          {submission.privacy === 'anonymous_public' && (
-            <button
-              className={`btn ${isPublished ? 'btn-saved' : 'btn-secondary'}`}
-              onClick={handlePublishCommunity}
-              disabled={isPublished}
-            >
-              {isPublished ? (
-                <>
-                  <Check size={16} />
-                  <span>Shared to Sanctuary</span>
-                </>
-              ) : (
-                <>
-                  <Share2 size={16} />
-                  <span>Publish Anonymously</span>
-                </>
-              )}
-            </button>
-          )}
-
-          <button className="btn btn-ghost" onClick={onNewDream}>
-            <RefreshCw size={16} />
-            <span>Explore Another Dream</span>
-          </button>
+        {/* Stage Title Sub-indicator */}
+        <div className="stage-status-indicator">
+          <span className="stage-counter-badge">{currentStage} of 4</span>
+          <h2 className="current-stage-title">{stageTitles[currentStage]}</h2>
         </div>
       </header>
 
-      {/* 2. Visual Journey Navigation Bar */}
-      <nav className="dream-journey-nav" aria-label="Dream Exploration Journey">
-        <div className="journey-track">
-          <button
-            className={`journey-step-btn ${activeSection === 'narrative' ? 'active' : ''}`}
-            onClick={() => scrollToSection('narrative')}
-          >
-            <span className="journey-num">01</span>
-            <span className="journey-label">YOUR DREAM</span>
-          </button>
-
-          <span className="journey-arrow">→</span>
-
-          <button
-            className={`journey-step-btn ${activeSection === 'noticed' ? 'active' : ''}`}
-            onClick={() => scrollToSection('noticed')}
-          >
-            <span className="journey-num">02</span>
-            <span className="journey-label">NOTICED</span>
-          </button>
-
-          <span className="journey-arrow">→</span>
-
-          <button
-            className={`journey-step-btn ${activeSection === 'evidence' ? 'active' : ''}`}
-            onClick={() => scrollToSection('evidence')}
-          >
-            <span className="journey-num">03</span>
-            <span className="journey-label">EVIDENCE</span>
-          </button>
-
-          <span className="journey-arrow">→</span>
-
-          <button
-            className={`journey-step-btn ${activeSection === 'research' ? 'active' : ''}`}
-            onClick={() => scrollToSection('research')}
-          >
-            <span className="journey-num">04</span>
-            <span className="journey-label">RESEARCH</span>
-          </button>
-
-          <span className="journey-arrow">→</span>
-
-          <button
-            className={`journey-step-btn ${activeSection === 'personal' ? 'active' : ''}`}
-            onClick={() => scrollToSection('personal')}
-          >
-            <span className="journey-num">05</span>
-            <span className="journey-label">PERSONAL</span>
-          </button>
-
-          <span className="journey-arrow">→</span>
-
-          <button
-            className={`journey-step-btn ${activeSection === 'thought' ? 'active' : ''}`}
-            onClick={() => scrollToSection('thought')}
-          >
-            <span className="journey-num">06</span>
-            <span className="journey-label">THOUGHT</span>
-          </button>
-
-          <span className="journey-arrow">→</span>
-
-          <button
-            className={`journey-step-btn ${activeSection === 'artwork' ? 'active' : ''}`}
-            onClick={() => scrollToSection('artwork')}
-          >
-            <span className="journey-num">07</span>
-            <span className="journey-label">IMAGINED</span>
-          </button>
-        </div>
-      </nav>
-
-      {/* 3. Main Journey Flow Sections */}
-      <main className="analysis-sections-stack">
+      {/* Main Guided Screen Flow */}
+      <main className="guided-main-card">
         {/* ========================================================================= */}
-        {/* 01. YOUR DREAM (Opening Narrative) */}
+        {/* STAGE 1: YOUR DREAM */}
         {/* ========================================================================= */}
-        <section id="section-narrative" className="analysis-card journey-card narrative-context-card">
-          <div className="card-eyebrow-row">
-            <span className="eyebrow-text neutral-eyebrow">
-              <Scroll size={14} className="text-gold" />
-              <span>STEP 01 · YOUR NOCTURNAL EXPERIENCE</span>
-            </span>
-            <span className="section-step-indicator">01 / 07</span>
-          </div>
+        {currentStage === 1 && (
+          <section className="stage-view stage-fade-in" aria-label="Stage 1: Your Dream">
+            <h1 className="dream-hero-title">
+              {submission.title || 'Your Nocturnal Dream'}
+            </h1>
 
-          <h2 className="card-main-title">The Dream Narrative</h2>
-          <p className="card-subtitle">
-            An overview of the setting, sensory textures, and key narrative recalled from sleep.
-          </p>
+            <div className="dream-wording-vitrine">
+              <Quote size={20} className="vitrine-quote-icon text-gold" />
+              <blockquote className={`dream-original-quote ${!isNarrativeExpanded && isLongDescription ? 'clamped' : ''}`}>
+                &quot;{descriptionText}&quot;
+              </blockquote>
 
-          <div className="narrative-vitrine">
-            <Quote size={16} className="vitrine-quote-icon text-gold" />
-            <blockquote className={`analysis-dream-excerpt ${!isNarrativeExpanded && isLongDescription ? 'clamped' : ''}`}>
-              &quot;{descriptionText}&quot;
-            </blockquote>
-            {isLongDescription && (
+              {isLongDescription && (
+                <button
+                  className="expand-narrative-btn"
+                  onClick={() => setIsNarrativeExpanded(!isNarrativeExpanded)}
+                >
+                  {isNarrativeExpanded ? (
+                    <>
+                      <ChevronUp size={14} />
+                      <span>Show less</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={14} />
+                      <span>Show full dream</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div className="stage-actions-footer">
+              <div className="reveal-hint-text">
+                <Sparkles size={14} className="text-gold" />
+                <span>We noticed the meaningful story behind your words.</span>
+              </div>
+
               <button
-                className="expand-narrative-btn"
-                onClick={() => setIsNarrativeExpanded(!isNarrativeExpanded)}
+                className="btn btn-primary btn-lg"
+                onClick={() => setCurrentStage(2)}
               >
-                {isNarrativeExpanded ? (
-                  <>
-                    <ChevronUp size={14} />
-                    <span>Show less</span>
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown size={14} />
-                    <span>Show complete narrative</span>
-                  </>
-                )}
+                <span>See What Stood Out</span>
+                <ArrowRight size={18} />
               </button>
+            </div>
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STAGE 2: WHAT STOOD OUT */}
+        {/* ========================================================================= */}
+        {currentStage === 2 && (
+          <section className="stage-view stage-fade-in" aria-label="Stage 2: What Stood Out">
+            <div className="stage-eyebrow">
+              <Sparkles size={14} className="text-gold" />
+              <span>NARRATIVE & EMOTIONAL OBSERVATIONS</span>
+            </div>
+
+            <h2 className="stage-heading">What Stood Out in Your Dream</h2>
+            <p className="stage-lead-p">
+              Rather than generic labels, here are the meaningful moments, unusual details, and emotional changes we noticed:
+            </p>
+
+            {/* Emotional Arc Badge */}
+            {emotionalJourney && (
+              <div className="emotional-arc-card">
+                <span className="emotional-arc-label">Emotional Shift</span>
+                <div className="emotional-arc-pill">
+                  <span className="arc-path">{emotionalJourney}</span>
+                </div>
+              </div>
             )}
-          </div>
 
-          {/* Optional Context Details Accordion */}
-          {(submission.location || submission.animals || submission.beforeDream || submission.afterWaking) && (
-            <div className="context-details-wrapper">
+            {/* 3-5 Meaningful Highlight Cards */}
+            <div className="highlights-list-grid">
+              {highlights.map((h, idx) => (
+                <div key={idx} className="highlight-item-card">
+                  <span className="highlight-emoji">{h.emoji}</span>
+                  <p className="highlight-text">{h.text}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="stage-actions-footer">
               <button
-                className="context-details-toggle"
-                onClick={() => setShowContextDetails(!showContextDetails)}
+                className="btn btn-secondary"
+                onClick={() => setCurrentStage(1)}
               >
-                <Info size={14} className="text-cyan" />
-                <span>{showContextDetails ? 'Hide contextual notes' : 'Show contextual notes (setting, pre-sleep state)'}</span>
-                {showContextDetails ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                <ChevronLeft size={16} />
+                <span>Back</span>
               </button>
 
-              {showContextDetails && (
-                <div className="narrative-summary-grid">
-                  {submission.location && (
-                    <div className="summary-item">
-                      <span className="summary-label">Setting & Space:</span>
-                      <span className="summary-value">{submission.location}</span>
-                    </div>
-                  )}
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={() => setCurrentStage(3)}
+              >
+                <span>How to Look at It</span>
+                <ArrowRight size={18} />
+              </button>
+            </div>
+          </section>
+        )}
 
-                  {submission.animals && (
-                    <div className="summary-item">
-                      <span className="summary-label">Creatures & Figures:</span>
-                      <span className="summary-value">{submission.animals.join(', ')}</span>
-                    </div>
-                  )}
+        {/* ========================================================================= */}
+        {/* STAGE 3: ONE POSSIBLE WAY TO LOOK AT IT */}
+        {/* ========================================================================= */}
+        {currentStage === 3 && (
+          <section className="stage-view stage-fade-in" aria-label="Stage 3: One Possible Way to Look at It">
+            <div className="stage-eyebrow">
+              <Compass size={14} className="text-gold" />
+              <span>CALM & EXPLORATORY REFLECTION</span>
+            </div>
 
-                  {submission.beforeDream && (
-                    <div className="summary-item">
-                      <span className="summary-label">Pre-Sleep Mindset:</span>
-                      <span className="summary-value">{submission.beforeDream}</span>
-                    </div>
-                  )}
+            <h2 className="stage-heading">One Possible Way to Look at It</h2>
+            <p className="stage-lead-p">
+              Every dream belongs only to you. Here is one simple way to reflect on it without dogmatic claims or diagnoses:
+            </p>
 
-                  {submission.afterWaking && (
-                    <div className="summary-item">
-                      <span className="summary-label">Awakening Mood:</span>
-                      <span className="summary-value">{submission.afterWaking}</span>
-                    </div>
+            <div className="single-reflection-card">
+              <p className="primary-reflection-text">
+                &ldquo;{simpleReflection}&rdquo;
+              </p>
+
+              {analysis.personalReflection?.suggestiveQuestions?.[0] && (
+                <div className="reflection-question-box">
+                  <span className="question-intro">A quiet question to consider:</span>
+                  <p className="question-content">
+                    {analysis.personalReflection.suggestiveQuestions[0]}
+                  </p>
+                </div>
+              )}
+
+              <div className="reflection-disclaimer-note">
+                <ShieldCheck size={14} className="text-emerald" />
+                <span>Non-diagnostic reflection intended for personal introspection.</span>
+              </div>
+            </div>
+
+            <div className="stage-actions-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setCurrentStage(2)}
+              >
+                <ChevronLeft size={16} />
+                <span>Back</span>
+              </button>
+
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={() => setCurrentStage(4)}
+              >
+                <span>See Your Dream Imagined</span>
+                <ArrowRight size={18} />
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STAGE 4: YOUR DREAM — IMAGINED & EXPLORE MORE */}
+        {/* ========================================================================= */}
+        {currentStage === 4 && (
+          <section className="stage-view stage-fade-in" aria-label="Stage 4: Your Dream Imagined">
+            <div className="stage-eyebrow">
+              <Palette size={14} className="text-gold" />
+              <span>FAITHFUL ARTISTIC VISUALIZATION</span>
+            </div>
+
+            <h2 className="stage-heading">Your Dream — Imagined</h2>
+            <p className="stage-lead-p">
+              An artwork synthesized specifically from your description, preserving your objects, mood, and colors:
+            </p>
+
+            {/* Dream Artwork Vitrine */}
+            <div className="artwork-display-frame">
+              <div className="canvas-wrapper">
+                {artDataUrl ? (
+                  <img
+                    src={artDataUrl}
+                    alt={submission.title || 'Surreal Dream Artwork'}
+                    className="rendered-artwork-img"
+                  />
+                ) : (
+                  <div className="artwork-loading-placeholder">
+                    <Sparkles size={28} className="spinner text-gold" />
+                    <span>Painting your dream...</span>
+                  </div>
+                )}
+                {/* Hidden canvas for procedural generation fallback */}
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+              </div>
+
+              {/* Artwork Controls & Actions */}
+              <div className="artwork-toolbar-row">
+                <div className="style-preset-selector">
+                  <Palette size={14} className="text-gold" />
+                  <span className="preset-label">Theme:</span>
+                  <select
+                    className="style-dropdown"
+                    value={currentStylePreset}
+                    onChange={e => setCurrentStylePreset(e.target.value)}
+                    disabled={isGeneratingArt}
+                  >
+                    {Object.values(ART_PRESETS).map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="artwork-buttons-group">
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={handleRegenerateArtwork}
+                    disabled={isGeneratingArt}
+                    title="Vary the artistic composition"
+                  >
+                    <RefreshCw size={14} className={isGeneratingArt ? 'spinner' : ''} />
+                    <span>Regenerate</span>
+                  </button>
+
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={handleDownloadArtwork}
+                    disabled={!artDataUrl}
+                    title="Download high-resolution image"
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </button>
+
+                  <button
+                    className={`btn btn-sm ${isSaved ? 'btn-saved' : 'btn-secondary'}`}
+                    onClick={handleSaveDream}
+                    disabled={isSaved}
+                  >
+                    <Bookmark size={14} />
+                    <span>{isSaved ? 'Saved' : 'Save Dream'}</span>
+                  </button>
+
+                  {submission.privacy === 'anonymous_public' && (
+                    <button
+                      className={`btn btn-sm ${isPublished ? 'btn-saved' : 'btn-secondary'}`}
+                      onClick={handlePublishCommunity}
+                      disabled={isPublished}
+                    >
+                      <Share2 size={14} />
+                      <span>{isPublished ? 'Shared' : 'Share'}</span>
+                    </button>
                   )}
+                </div>
+              </div>
+
+              <div className="artwork-epistemic-disclaimer">
+                <span>Your Dream — Imagined · An artistic visualization inspired by your description. Not scientific evidence.</span>
+              </div>
+            </div>
+
+            {/* ========================================================================= */}
+            {/* EXPLORE MORE (Optional Choices Hub) */}
+            {/* ========================================================================= */}
+            <div className="explore-more-container">
+              <div className="explore-more-header">
+                <h3 className="explore-more-title">Explore More If You Wish</h3>
+                <p className="explore-more-desc">
+                  Choose what you are curious about. Research and traditional perspectives are always optional.
+                </p>
+              </div>
+
+              <div className="explore-choices-grid">
+                {/* 1. Research */}
+                <button
+                  className="explore-choice-card"
+                  onClick={() => setExploreModal('research')}
+                >
+                  <div className="choice-icon-wrap bg-cyan-subtle">
+                    <Brain size={22} className="text-cyan" />
+                  </div>
+                  <div className="choice-text-wrap">
+                    <h4 className="choice-title">🔬 Sleep & Mind Research</h4>
+                    <p className="choice-desc">How science explains REM sleep, emotion processing, and memory sorting.</p>
+                  </div>
+                  <ChevronRight size={18} className="choice-arrow text-cyan" />
+                </button>
+
+                {/* 2. Old Dream Beliefs */}
+                <button
+                  className="explore-choice-card"
+                  onClick={() => setExploreModal('beliefs')}
+                >
+                  <div className="choice-icon-wrap bg-gold-subtle">
+                    <BookOpen size={22} className="text-gold" />
+                  </div>
+                  <div className="choice-text-wrap">
+                    <h4 className="choice-title">🏺 Old Dream Beliefs</h4>
+                    <p className="choice-desc">Historical records from antiquity, manuscripts, and cultural traditions.</p>
+                  </div>
+                  <ChevronRight size={18} className="choice-arrow text-gold" />
+                </button>
+
+                {/* 3. Astrology */}
+                <button
+                  className="explore-choice-card"
+                  onClick={() => setExploreModal('astrology')}
+                >
+                  <div className="choice-icon-wrap bg-purple-subtle">
+                    <Sparkles size={22} className="text-purple" />
+                  </div>
+                  <div className="choice-text-wrap">
+                    <h4 className="choice-title">✨ Astrology (Optional)</h4>
+                    <p className="choice-desc">Traditional astrological element & planetary correspondences (non-scientific).</p>
+                  </div>
+                  <ChevronRight size={18} className="choice-arrow text-purple" />
+                </button>
+
+                {/* 4. My Dream Patterns */}
+                <button
+                  className="explore-choice-card"
+                  onClick={() => setExploreModal('patterns')}
+                >
+                  <div className="choice-icon-wrap bg-emerald-subtle">
+                    <Compass size={22} className="text-emerald" />
+                  </div>
+                  <div className="choice-text-wrap">
+                    <h4 className="choice-title">🧠 My Dream Patterns</h4>
+                    <p className="choice-desc">Check recurring emotions and motifs across all your saved dreams.</p>
+                  </div>
+                  <ChevronRight size={18} className="choice-arrow text-emerald" />
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Final Action Bar */}
+            <div className="stage-actions-footer stage-final-footer">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setCurrentStage(3)}
+              >
+                <ChevronLeft size={16} />
+                <span>Back to Reflection</span>
+              </button>
+
+              <button
+                className="btn btn-primary"
+                onClick={onNewDream}
+              >
+                <RefreshCw size={16} />
+                <span>Explore Another Dream</span>
+              </button>
+            </div>
+          </section>
+        )}
+      </main>
+
+      {/* ========================================================================= */}
+      {/* OPTIONAL MODALS / DRAWERS FOR EXPLORE MORE */}
+      {/* ========================================================================= */}
+
+      {/* 1. Research Modal */}
+      {exploreModal === 'research' && (
+        <div className="modal-backdrop" onClick={() => setExploreModal(null)}>
+          <div className="modal-dialog explore-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title-row">
+                <Brain size={20} className="text-cyan" />
+                <h3>Sleep Science & Psychology Research</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="simple-science-intro">
+                <h4>In Simple Everyday English:</h4>
+                <p>
+                  Dreams may sometimes help the brain process strong emotions connected to waking memories. During REM sleep, the brain reorganizes recent experiences and integrates them with older memories in a safe, offline state.
+                </p>
+              </div>
+
+              <h4 className="research-subheading">Documented Scientific Studies:</h4>
+              {scientificStudies.length > 0 ? (
+                <div className="research-records-list">
+                  {scientificStudies.map((item, idx) => (
+                    <div key={idx} className="research-item-card">
+                      <div className="research-item-header">
+                        <span className="research-concept-tag">{item.researchRecord.conceptName}</span>
+                        <span className="research-discipline-tag">{item.researchRecord.epistemicType || 'empirical finding'}</span>
+                      </div>
+                      <p className="research-summary-text">{item.researchRecord.summary}</p>
+                      <div className="research-citation-row">
+                        <span className="research-citation">{item.researchRecord.citation || item.researchRecord.originalPublication}</span>
+                        {item.researchRecord.doi && (
+                          <span className="research-doi">DOI: {item.researchRecord.doi}</span>
+                        )}
+                        <button
+                          className="btn-link-view"
+                          onClick={() => {
+                            setSourceModalTarget({
+                              type: 'psychology',
+                              claim: item.researchRecord as ResearchRecord,
+                              relevanceReason: item.relevanceReason
+                            });
+                          }}
+                        >
+                          View study record →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="no-sources-soft-text">No specific scientific studies matched this particular imagery.</p>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Old Dream Beliefs Modal */}
+      {exploreModal === 'beliefs' && (
+        <div className="modal-backdrop" onClick={() => setExploreModal(null)}>
+          <div className="modal-dialog explore-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title-row">
+                <BookOpen size={20} className="text-gold" />
+                <h3>Historical Cultural Traditions</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="beliefs-intro-box">
+                <p>
+                  These are historical perspectives from ancient manuscripts and cultural traditions. They reflect historical beliefs, not universal predictions.
+                </p>
+              </div>
+
+              {historicalEvidence.length > 0 ? (
+                <div className="beliefs-records-list">
+                  {historicalEvidence.map((ev, idx) => (
+                    <div key={idx} className="belief-item-card">
+                      <div className="belief-item-header">
+                        <span className="belief-tradition-tag">
+                          {ev.evidenceRecord?.culturalTradition || ev.traditionLabel || 'Documented Tradition'}
+                        </span>
+                        <span className="belief-period-tag">{ev.evidenceRecord?.historicalPeriod}</span>
+                      </div>
+                      <p className="belief-claim-text">&ldquo;{ev.evidenceRecord?.claim || ev.claim?.claim}&rdquo;</p>
+                      <div className="belief-source-row">
+                        <span className="belief-source-title">{ev.evidenceRecord?.source?.sourceTitle || 'Historical Source'}</span>
+                        <button
+                          className="btn-link-view"
+                          onClick={() => {
+                            if (ev.evidenceRecord) {
+                              setSourceModalTarget({
+                                type: 'cultural',
+                                claim: ev.evidenceRecord as EvidenceRecord,
+                                relevanceReason: ev.relevanceReason
+                              });
+                            }
+                          }}
+                        >
+                          View source record →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-sources-soft-card">
+                  <p>No trusted source found for this idea.</p>
+                  <span className="no-source-subtext">Somnithos only shows audited, historical manuscripts and never invents ancient traditions.</span>
                 </div>
               )}
             </div>
-          )}
-        </section>
 
-        {/* ========================================================================= */}
-        {/* 02. WHAT SOMNITHOS NOTICED (Detected Elements, Not Meanings) */}
-        {/* ========================================================================= */}
-        <section id="section-noticed" className="analysis-card journey-card noticed-card">
-          <div className="card-eyebrow-row">
-            <span className="eyebrow-text observation-eyebrow">
-              <Eye size={14} className="text-gold" />
-              <span>STEP 02 · OBSERVATIONAL LAYER · DETECTED MOTIFS</span>
-            </span>
-            <span className="section-step-indicator">02 / 07</span>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
+                Close
+              </button>
+            </div>
           </div>
-
-          <h2 className="card-main-title">What Somnithos Noticed</h2>
-          <p className="card-subtitle">
-            These are elements we detected in your description. They are concrete observations from your narrative, not universal omens or fixed meanings.
-          </p>
-
-          <div className="noticed-motifs-grid">
-            {analysis.extractedFeatures.dominantMotifs.map((motif, idx) => {
-              const isSelected = selectedMotifDetail === motif;
-              const whyNoticed = analysis.extractedFeatures.motifsWhyNoticed?.[motif] ||
-                `Identified '${motif}' referenced in your narrative context.`;
-
-              return (
-                <div
-                  key={idx}
-                  className={`noticed-motif-card ${isSelected ? 'selected' : ''}`}
-                  onClick={() => setSelectedMotifDetail(isSelected ? null : motif)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      setSelectedMotifDetail(isSelected ? null : motif);
-                    }
-                  }}
-                  title="Click to view why Somnithos noticed this element"
-                >
-                  <div className="motif-card-header">
-                    <span className="motif-name-badge">
-                      <Sparkles size={12} className="text-gold" />
-                      <span>{motif.charAt(0).toUpperCase() + motif.slice(1)}</span>
-                    </span>
-                    <span className="motif-tap-hint">
-                      {isSelected ? 'Hide' : 'Why noticed?'}
-                    </span>
-                  </div>
-
-                  <p className="motif-card-note">
-                    {isSelected ? whyNoticed : `Detected in your dream description.`}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 03. WHAT HUMAN KNOWLEDGE SAYS (Historical Traditions) */}
-        {/* ========================================================================= */}
-        <section id="section-evidence" className="analysis-card journey-card evidence-card">
-          <div className="card-eyebrow-row">
-            <span className="eyebrow-text history-eyebrow">
-              <History size={14} className="text-gold" />
-              <span>STEP 03 · EVIDENCE LAYER · HISTORICAL TRADITIONS</span>
-            </span>
-            <span className="section-step-indicator">03 / 07</span>
-          </div>
-
-          <h2 className="card-main-title">What Human Knowledge Says: Historical Perspectives</h2>
-          <p className="card-subtitle">
-            How documented historical manuscripts, classical treatises, and epistemic traditions recorded similar motifs within specific cultural and temporal contexts.
-          </p>
-
-          <div className="cultural-claims-grid">
-            {analysis.culturalPerspectivesNotFound || analysis.culturalPerspectives.length === 0 ? (
-              <div className="no-reliable-source-box">
-                <div className="no-source-header">
-                  <AlertTriangle size={18} className="text-amber" />
-                  <span className="no-source-title">No Reliable Source Found</span>
-                  <span className="no-source-badge">NO RELIABLE SOURCE</span>
-                </div>
-                <p className="no-source-desc">
-                  No sufficiently reliable source was found for this specific claim. Somnithos does not invent or fabricate cultural traditions when verified historical records are unavailable.
-                </p>
-              </div>
-            ) : (
-              analysis.culturalPerspectives.map((match, idx) => {
-                const claim = match.claim;
-                return (
-                  <article key={idx} className="archival-vitrine-card">
-                    <div className="claim-card-top">
-                      <div className="tradition-info">
-                        <span className="tradition-scope-tag">DOCUMENTED TRADITION</span>
-                        <h4 className="tradition-title">
-                          {(claim as any).tradition || (claim as any).exactTradition || (claim as any).culturalTradition || 'Historical Tradition'}
-                        </h4>
-                        <span className="tradition-context">
-                          {(claim.source as any).geographicRegion || (claim.source as any).institutionOrPublisher || (claim as any).geographicContext || ''} · {(claim.source as any).historicalPeriod || (claim as any).historicalPeriod || (claim.source as any).publicationDate || ''}
-                        </span>
-                      </div>
-                      <EvidenceBadge level={claim.evidenceLevel} />
-                    </div>
-
-                    <p className="claim-statement">{claim.claim}</p>
-
-                    {/* Excerpt */}
-                    <div className="claim-excerpt-box">
-                      <div className="excerpt-label">
-                        <BookOpen size={13} className="text-gold" />
-                        <span>Source Excerpt from Manuscript:</span>
-                      </div>
-                      <blockquote className="excerpt-text">
-                        &quot;{claim.supportingExcerpt}&quot;
-                      </blockquote>
-                    </div>
-
-                    {/* Source citation footer & "Why am I seeing this?" */}
-                    <div className="claim-card-bottom">
-                      <div className="source-mini-cite">
-                        <History size={13} className="text-gold" />
-                        <span>
-                          {claim.source.sourceTitle || (claim.source as any).manuscriptOrWork} ({claim.source.publicationDate || (claim.source as any).approximateDate})
-                        </span>
-                      </div>
-                      <button
-                        className="why-seeing-this-btn prominent-why-btn"
-                        onClick={() =>
-                          setSourceModalTarget({
-                            type: 'cultural',
-                            claim: claim as any,
-                            relevanceReason: match.relevanceReason
-                          })
-                        }
-                      >
-                        <Compass size={14} className="text-gold" />
-                        <span>Why am I seeing this?</span>
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
-                  </article>
-                );
-              })
-            )}
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* 04. MODERN SLEEP & COGNITIVE RESEARCH */}
-        {/* ========================================================================= */}
-        <section id="section-research" className="analysis-card journey-card psychology-card">
-          <div className="card-eyebrow-row">
-            <span className="eyebrow-text science-eyebrow">
-              <Brain size={14} className="text-cyan" />
-              <span>STEP 04 · EVIDENCE LAYER · MODERN SLEEP SCIENCE</span>
-            </span>
-            <span className="non-diagnostic-badge">
-              <ShieldCheck size={13} className="text-gold" />
-              <span>Non-Diagnostic Cognitive Framework</span>
-            </span>
-          </div>
-
-          <h2 className="card-main-title">Modern Sleep & Cognitive Research</h2>
-          <p className="card-subtitle">
-            How contemporary cognitive neuroscience models sleep mentation, memory consolidation, and affective regulation.
-          </p>
-
-          <div className="psychology-claims-grid">
-            {analysis.psychologyPerspectives.map((match, idx) => {
-              const psy = match.psychologyClaim;
-              return (
-                <article key={idx} className="psychology-claim-card science-vitrine-card">
-                  <div className="claim-card-top">
-                    <div>
-                      <span className={`psy-model-type-badge ${psy.epistemicType}`}>
-                        {psy.epistemicType.replace(/_/g, ' ').toUpperCase()}
-                      </span>
-                      <h4 className="psy-concept-name">{psy.conceptName}</h4>
-                      <span className="psy-researcher-line">
-                        {psy.researchers} ({psy.publicationYear}) · {psy.source.institutionOrPublisher}
-                      </span>
-                    </div>
-                    <EvidenceBadge level={psy.evidenceLevel} />
-                  </div>
-
-                  <p className="psy-summary-text">{psy.summary}</p>
-
-                  {/* Documented Limitations */}
-                  <div className="psy-limitations-box">
-                    <div className="limitation-label">
-                      <Info size={13} className="text-cyan" />
-                      <span>Documented Scope & Limitations:</span>
-                    </div>
-                    <div className="limitation-text">{psy.documentedLimitations}</div>
-                  </div>
-
-                  {/* Source citation & "Why am I seeing this?" */}
-                  <div className="claim-card-bottom">
-                    <div className="source-mini-cite">
-                      <BookOpen size={13} className="text-cyan" />
-                      <span>
-                        {psy.source.sourceTitle} ({psy.publicationYear})
-                      </span>
-                    </div>
-                    <button
-                      className="why-seeing-this-btn prominent-why-btn"
-                      onClick={() =>
-                        setSourceModalTarget({
-                          type: 'psychology',
-                          claim: psy,
-                          relevanceReason: match.relevanceReason
-                        })
-                      }
-                    >
-                      <Compass size={14} className="text-cyan" />
-                      <span>Why am I seeing this?</span>
-                      <ChevronRight size={14} />
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* ========================================================================= */}
-        {/* EVIDENTIARY DIVIDER: Documented Knowledge vs Personal Reading */}
-        {/* ========================================================================= */}
-        <div className="epistemic-boundary-divider" role="separator" aria-label="Divider between documented evidence and personal reflection">
-          <div className="divider-line"></div>
-          <div className="divider-badge-box">
-            <span className="divider-tag evidence-tag">
-              <BookOpen size={12} />
-              <span>DOCUMENTED KNOWLEDGE</span>
-            </span>
-            <span className="divider-vs">⟷</span>
-            <span className="divider-tag reflection-tag">
-              <Sparkles size={12} />
-              <span>PERSONAL INTERPRETATION</span>
-            </span>
-          </div>
-          <p className="divider-caption">
-            The sections above are grounded in verified historical records and peer-reviewed cognitive research. The sections below are exploratory personal and creative reflections for your contemplative inquiry.
-          </p>
-          <div className="divider-line"></div>
         </div>
+      )}
 
-        {/* ========================================================================= */}
-        {/* 05. YOUR PERSONAL READING (Personal Interpretation) */}
-        {/* ========================================================================= */}
-        <section id="section-personal" className="analysis-card journey-card personal-interpretation-card">
-          <div className="card-eyebrow-row">
-            <span className="eyebrow-text imagination-eyebrow">
-              <Sparkles size={14} className="text-cyan" />
-              <span>STEP 05 · REFLECTION LAYER · PERSONAL READING</span>
-            </span>
-            <span className="section-step-indicator">05 / 07</span>
-          </div>
+      {/* 3. Astrology Modal */}
+      {exploreModal === 'astrology' && (
+        <div className="modal-backdrop" onClick={() => setExploreModal(null)}>
+          <div className="modal-dialog explore-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title-row">
+                <Sparkles size={20} className="text-purple" />
+                <h3>Astrological Perspectives</h3>
+              </div>
+              <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
 
-          <h2 className="card-main-title">Your Dream, Personally</h2>
-          <p className="card-subtitle">
-            One possible reading synthesizing your emotions, context, and motifs. This is an invitation to personal inquiry, not an objective diagnosis.
-          </p>
-
-          <div className="personal-synthesis-body">
-            <p className="primary-interpretation-para">
-              {analysis.personalInterpretation.primarySynthesis || (analysis.personalInterpretation as any).narrativeArcs?.[0] || 'One possible reading invites contemplative reflection on the feelings and images recalled from your sleep.'}
-            </p>
-
-            {(analysis.personalInterpretation.emotionalResonance || (analysis.personalInterpretation as any).emotionalReading) && (
-              <div className="resonance-callout">
-                <span className="resonance-label">Affective Resonance:</span>
-                <p className="resonance-text">
-                  {analysis.personalInterpretation.emotionalResonance || (analysis.personalInterpretation as any).emotionalReading}
+            <div className="modal-body">
+              {/* Mandatory Disclaimer */}
+              <div className="astrology-disclaimer-banner">
+                <ShieldCheck size={16} className="text-gold" />
+                <p>
+                  <strong>Note:</strong> Astrology is a traditional belief system. It is not scientific evidence.
                 </p>
               </div>
-            )}
 
-            {/* Questions to Consider */}
-            <div className="suggestive-questions-box">
-              <div className="questions-header">
-                <HelpCircle size={15} className="text-gold" />
-                <h5 className="questions-title">Questions to Consider</h5>
-              </div>
-              <ul className="questions-list">
-                {reflectionQuestions.map((q, idx) => (
-                  <li key={idx} className="question-item">{q}</li>
-                ))}
-              </ul>
+              {!astrologyResult ? (
+                <form className="astrology-birth-form" onSubmit={handleCalculateAstrology}>
+                  <p className="astrology-prompt-text">
+                    Optionally provide birth details to explore traditional astrological correspondences for your dream. (We do not ask for your name).
+                  </p>
+
+                  <div className="form-group-row">
+                    <div className="form-field">
+                      <label><Calendar size={14} /> Date of Birth</label>
+                      <input
+                        type="date"
+                        value={birthDate}
+                        onChange={e => setBirthDate(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-field">
+                      <label><Clock size={14} /> Time of Birth (Optional)</label>
+                      <input
+                        type="time"
+                        value={birthTime}
+                        onChange={e => setBirthTime(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-field">
+                    <label><MapPin size={14} /> Birth Place (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. London, Tokyo, Chicago"
+                      value={birthPlace}
+                      onChange={e => setBirthPlace(e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <button type="submit" className="btn btn-primary w-full">
+                    <span>Calculate Astrological Reading</span>
+                  </button>
+                </form>
+              ) : (
+                <div className="astrology-result-view">
+                  <div className="astrology-tags-row">
+                    <span className="astro-tag">{astrologyResult.signEstimate}</span>
+                    <span className="astro-tag">{astrologyResult.element} Element</span>
+                    <span className="astro-tag">{astrologyResult.planetaryTheme}</span>
+                  </div>
+
+                  <p className="astrology-reading-p">
+                    {astrologyResult.reading}
+                  </p>
+
+                  <button
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setAstrologyResult(null)}
+                  >
+                    <span>Change birth info</span>
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        </section>
 
-        {/* ========================================================================= */}
-        {/* 06. A THOUGHT TO CARRY (Original Reflection & Verified Quote) */}
-        {/* ========================================================================= */}
-        <section id="section-thought" className="analysis-card journey-card reflection-closing-card">
-          <div className="card-eyebrow-row">
-            <span className="eyebrow-text imagination-eyebrow">
-              <Feather size={14} className="text-gold" />
-              <span>STEP 06 · A THOUGHT TO CARRY WITH YOU</span>
-            </span>
-            <span className="section-step-indicator">06 / 07</span>
-          </div>
-
-          <h2 className="card-main-title">A Thought to Carry</h2>
-          <p className="card-subtitle">
-            An evocative meditation synthesizing the mood and imagery of your dream.
-          </p>
-
-          <div className="reflection-quote-wrapper">
-            <blockquote className="reflection-message">
-              &quot;{analysis.originalReflection.message}&quot;
-            </blockquote>
-
-            <div className="reflection-attribution">
-              <span className="attribution-tag">
-                {analysis.originalReflection.label}
-              </span>
-              <button
-                className="copy-quote-btn"
-                onClick={handleCopyReflection}
-                title="Copy reflection to clipboard"
-              >
-                {copiedQuote ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copiedQuote ? 'Copied to Clipboard' : 'Copy Reflection'}</span>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
+                Close
               </button>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Verified Historical Quotation (if matched) */}
-          {analysis.verifiedQuoteMatch && (
-            <div className="verified-historical-quote-box">
-              <div className="v-quote-header">
-                <BookOpen size={14} className="text-gold" />
-                <span>Historical Resonance from Verified Text:</span>
+      {/* 4. Patterns Modal */}
+      {exploreModal === 'patterns' && (
+        <div className="modal-backdrop" onClick={() => setExploreModal(null)}>
+          <div className="modal-dialog explore-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title-row">
+                <Compass size={20} className="text-emerald" />
+                <h3>My Dream Patterns</h3>
               </div>
-              <blockquote className="authentic-quote-text">
-                &quot;{analysis.verifiedQuoteMatch.exactQuote}&quot;
-              </blockquote>
-              <div className="quote-provenance-footer">
-                <div className="quote-author-info">
-                  <strong>{analysis.verifiedQuoteMatch.author}</strong>, <em>{analysis.verifiedQuoteMatch.workTitle}</em>
-                  <span className="quote-pub-date"> ({analysis.verifiedQuoteMatch.publicationOrManuscriptDate})</span>
+              <button className="modal-close-btn" onClick={() => setExploreModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="patterns-summary-box">
+                <h4>Motifs in This Dream:</h4>
+                <div className="motifs-tag-cloud">
+                  {(analysis.extractedFeatures.dominantMotifs || []).map((m, i) => (
+                    <span key={i} className="motif-pill">{m}</span>
+                  ))}
+                  {(analysis.extractedFeatures.emotionalSignals || []).map((e, i) => (
+                    <span key={i} className="motif-pill emotion-pill">{e}</span>
+                  ))}
                 </div>
-                <p className="quote-context-note">
-                  {analysis.verifiedQuoteMatch.historicalContext}
+
+                <p className="pattern-insight-p">
+                  As you record more dreams in your personal archive, Somnithos discovers recurring emotional themes and imagery transitions over time.
                 </p>
               </div>
             </div>
-          )}
-        </section>
 
-        {/* ========================================================================= */}
-        {/* 07. YOUR DREAM — IMAGINED (Dream Artwork Visualization) */}
-        {/* ========================================================================= */}
-        <section id="section-artwork" className="analysis-card journey-card artwork-card">
-          <div className="card-eyebrow-row">
-            <span className="eyebrow-text imagination-eyebrow">
-              <Palette size={14} className="text-cyan" />
-              <span>STEP 07 · IMAGINATION LAYER · ARTISTIC VISUALIZATION</span>
-            </span>
-            <span className="artwork-disclaimer-pill">
-              {artworkMetadata?.isFallback ? 'Procedural Fallback Artwork' : 'AI-Generated Artwork'}
-            </span>
-          </div>
-
-          <div className="artwork-header-flex">
-            <div>
-              <h2 className="card-main-title">{analysis.dreamArtwork.label}</h2>
-              <p className="card-subtitle">{analysis.dreamArtwork.subLabel}</p>
-            </div>
-
-            {/* Provider & Theme Selectors */}
-            <div className="artwork-controls-toolbar">
-              {/* Generation Engine Selector */}
-              <div className="provider-selector-bar">
-                <span className="presets-label-mini">
-                  <Cpu size={12} className="text-gold" />
-                  <span>Engine:</span>
-                </span>
-                <div className="provider-pills">
-                  <button
-                    className={`provider-pill ${selectedProvider === 'real_ai' ? 'active' : ''}`}
-                    onClick={() => setSelectedProvider('real_ai')}
-                    title="Somnithos AI Artwork Engine (Server API with safe fallback)"
-                  >
-                    AI Dream Engine
-                  </button>
-                  <button
-                    className={`provider-pill ${selectedProvider === 'procedural_canvas' ? 'active' : ''}`}
-                    onClick={() => setSelectedProvider('procedural_canvas')}
-                    title="Real-time HTML5 Canvas layered procedural shader synthesis"
-                  >
-                    Procedural Canvas
-                  </button>
-                </div>
-              </div>
-
-              {/* Style Presets Selector */}
-              <div className="style-presets-bar">
-                <span className="presets-label-mini">Atmospheric Theme:</span>
-                <div className="presets-pills">
-                  {Object.values(ART_PRESETS).map(preset => (
-                    <button
-                      key={preset.id}
-                      className={`preset-pill ${currentStylePreset === preset.id ? 'active' : ''}`}
-                      onClick={() => setCurrentStylePreset(preset.id)}
-                    >
-                      {preset.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Cinematic Canvas Frame */}
-          <div className="artwork-display-frame">
-            {artDataUrl && selectedProvider !== 'procedural_canvas' ? (
-              <img
-                src={artDataUrl}
-                alt="Dream Visualization"
-                className="dream-image-element"
-                style={{ width: '100%', height: '100%', objectFit: 'contain', borderRadius: '12px' }}
-              />
-            ) : null}
-
-            <canvas
-              ref={canvasRef}
-              className="dream-canvas-element"
-              style={{ display: artDataUrl && selectedProvider !== 'procedural_canvas' ? 'none' : 'block' }}
-            />
-
-            {isGeneratingArt && (
-              <div className="artwork-generating-overlay">
-                <Sparkles size={24} className="spinning text-gold" />
-                <span>Imagining your dream...</span>
-              </div>
-            )}
-
-            <div className="artwork-overlay-controls">
-              <button
-                className="art-control-btn regenerate-btn"
-                onClick={handleRegenerateArtwork}
-                disabled={isGeneratingArt}
-                title="Regenerate visualization variation preserving dream details"
-              >
-                <RefreshCw size={16} className={isGeneratingArt ? 'spinning' : ''} />
-                <span>Regenerate</span>
-              </button>
-              <button
-                className="art-control-btn download-btn"
-                onClick={handleDownloadArtwork}
-                title="Download high-resolution dream art"
-              >
-                <Download size={16} />
-                <span>Download Artwork</span>
-              </button>
-              <button
-                className="art-control-btn inspect-prompt-btn"
-                onClick={() => setShowPromptDetails(!showPromptDetails)}
-              >
-                {showPromptDetails ? <Eye size={16} /> : <Info size={16} />}
-                <span>{showPromptDetails ? 'Hide Art Prompt' : 'Inspect Prompt'}</span>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setExploreModal(null)}>
+                Close
               </button>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Prompt details drawer */}
-          {showPromptDetails && (
-            <div className="art-prompt-details-box">
-              <div className="prompt-header-row">
-                <h5 className="prompt-details-title">Generative Visualization Prompt:</h5>
-                <span className="provider-indicator-tag">
-                  Active Engine: {selectedProvider === 'procedural_canvas' ? 'Procedural Canvas (Offline)' : 'AI Dream Engine'}
-                </span>
-              </div>
-              <p className="prompt-details-text">&quot;{analysis.dreamArtwork.promptUsed}&quot;</p>
-              
-              <div className="extracted-elements-section">
-                <span className="elements-title">Faithfully Extracted Narrative Objects:</span>
-                <div className="prompt-keywords">
-                  {analysis.dreamArtwork.visualKeywords.map((kw, i) => (
-                    <span key={i} className="kw-tag">
-                      {kw}
-                    </span>
-                  ))}
-                </div>
-              </div>
+      {/* Source Viewer Modal */}
+      {sourceModalTarget && (
+        <SourceViewerModal
+          target={sourceModalTarget}
+          onClose={() => setSourceModalTarget(null)}
+        />
+      )}
 
-              <p className="prompt-note">
-                *Somnithos dynamically renders these specific narrative objects, lighting, and textures to mirror your dream storyline.
-              </p>
-            </div>
-          )}
-        </section>
-      </main>
-
-      {/* 4. Bottom Navigation & Exploration Actions */}
-      <footer className="analysis-bottom-nav">
-        <button className="btn btn-primary btn-lg" onClick={onNewDream}>
-          <Sparkles size={18} />
-          <span>Explore Another Dream</span>
-          <ArrowRight size={16} />
-        </button>
-        <button className="btn btn-secondary btn-lg" onClick={onViewCommunity}>
-          <Share2 size={18} />
-          <span>Browse Community Dream Sanctuary</span>
-        </button>
-      </footer>
-
-      {/* 5. Source Viewer Side Drawer */}
-      <SourceViewerModal
-        target={sourceModalTarget}
-        onClose={() => setSourceModalTarget(null)}
-      />
-
-      {/* 6. Provenance & Verification Audit Modal */}
+      {/* Audit Report Modal */}
       <AuditReportModal
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}

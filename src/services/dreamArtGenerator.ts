@@ -121,7 +121,7 @@ export class DreamArtGenerator {
       elements.push(text.includes('purple') ? 'Purple Train' : 'Surreal Train');
     }
     if (text.includes('fish') || text.includes('enormous fish') || text.includes('whale') || text.includes('shark')) {
-      elements.push(text.includes('enormous') || text.includes('giant') ? 'Enormous Fish' : 'Luminous Fish');
+      elements.push(text.includes('enormous') || text.includes('giant') || text.includes('huge') ? 'Enormous Fish' : 'Luminous Fish');
     }
     if (text.includes('bird') || text.includes('birds') || text.includes('flying bird')) {
       elements.push('Colored Birds');
@@ -136,7 +136,21 @@ export class DreamArtGenerator {
       elements.push(text.includes('wooden') ? 'Carved Wooden Door' : 'Surreal Portal');
     }
     if (text.includes('forest') || text.includes('trees') || text.includes('woods') || text.includes('jungle')) {
-      elements.push(text.includes('bright') ? 'Bright Forest' : 'Deep Forest');
+      if (text.includes('light') || text.includes('warm')) {
+        elements.push('Dark Forest with Warm Distant Light');
+      } else {
+        elements.push(text.includes('bright') ? 'Bright Forest' : 'Deep Forest');
+      }
+    }
+    if (text.includes('school') || text.includes('classroom')) {
+      elements.push('Old School Setting');
+      elements.push('Classroom Corridor');
+    }
+    if (text.includes('friend') || text.includes('best friend')) {
+      elements.push('Best Friend Waiting Outside');
+    }
+    if (text.includes('warm light') || text.includes('light in the distance')) {
+      elements.push('Warm Glowing Light');
     }
     if (text.includes('underwater') || text.includes('submerged') || text.includes('ocean') || text.includes('sea')) {
       elements.push('Underwater Realm');
@@ -223,11 +237,14 @@ export class DreamArtGenerator {
     const isWoodenDoor = text.includes('wooden') || text.includes('wood') || hasDoor;
     const hasForest = text.includes('forest') || text.includes('trees') || text.includes('woods') || features.detectedSymbols.includes('forest');
     const isBrightForest = text.includes('bright') || text.includes('glowing') || hasForest;
+    const hasWarmLightInForest = hasForest && (text.includes('warm light') || text.includes('light') || text.includes('lantern') || text.includes('lamp'));
+    const hasSchool = text.includes('school') || text.includes('classroom') || text.includes('hallway');
+    const hasFriend = text.includes('friend') || text.includes('best friend');
     const hasSnake = text.includes('snake') || text.includes('serpent') || features.detectedSymbols.includes('snake');
     const hasBridge = text.includes('bridge') || features.detectedSymbols.includes('bridge');
 
     // =========================================================================
-    // 1. SKY / OCEAN DEPTH GRADIENT
+    // 1. SKY / OCEAN / ATMOSPHERE DEPTH GRADIENT
     // =========================================================================
     const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
     if (isUnderwater) {
@@ -235,6 +252,14 @@ export class DreamArtGenerator {
       bgGrad.addColorStop(0.3, '#081735');
       bgGrad.addColorStop(0.7, '#0f2b4c');
       bgGrad.addColorStop(1, '#020d1a');
+    } else if (hasSchool) {
+      bgGrad.addColorStop(0, '#0b0f19');
+      bgGrad.addColorStop(0.5, '#1e1b4b');
+      bgGrad.addColorStop(1, '#090d16');
+    } else if (hasWarmLightInForest) {
+      bgGrad.addColorStop(0, '#040711');
+      bgGrad.addColorStop(0.6, '#0b1329');
+      bgGrad.addColorStop(1, '#03060d');
     } else {
       bgGrad.addColorStop(0, preset.palette.skyTop);
       bgGrad.addColorStop(0.65, preset.palette.skyBottom);
@@ -739,6 +764,139 @@ export class DreamArtGenerator {
       ctx.beginPath();
       ctx.arc(width * 0.5, horizonY + 80, 160, Math.PI * 1.15, Math.PI * 1.85);
       ctx.stroke();
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 11.5. WARM DISTANT LIGHT IN DARK FOREST (If present)
+    // =========================================================================
+    if (hasWarmLightInForest) {
+      ctx.save();
+      const lightX = width * 0.72;
+      const lightY = height * 0.45;
+
+      // Distant Lantern / Radiant Warm Glow Bloom
+      const lightBloom = ctx.createRadialGradient(lightX, lightY, 4, lightX, lightY, 220);
+      lightBloom.addColorStop(0, 'rgba(254, 240, 138, 0.95)'); // Bright golden core
+      lightBloom.addColorStop(0.2, 'rgba(251, 191, 36, 0.6)');  // Warm amber
+      lightBloom.addColorStop(0.5, 'rgba(245, 158, 11, 0.25)'); // Outer warm halo
+      lightBloom.addColorStop(1, 'transparent');
+      ctx.fillStyle = lightBloom;
+      ctx.beginPath();
+      ctx.arc(lightX, lightY, 220, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Soft light beam path through trees on ground
+      const pathGrad = ctx.createLinearGradient(lightX, lightY, width * 0.4, height * 0.85);
+      pathGrad.addColorStop(0, 'rgba(251, 191, 36, 0.4)');
+      pathGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = pathGrad;
+      ctx.beginPath();
+      ctx.moveTo(lightX - 25, lightY);
+      ctx.lineTo(width * 0.6, height * 0.85);
+      ctx.lineTo(width * 0.3, height * 0.85);
+      ctx.lineTo(lightX + 25, lightY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Lone Traveler Silhouette moving toward light
+      const travelerX = width * 0.45;
+      const travelerY = height * 0.64;
+      ctx.fillStyle = '#050711';
+      ctx.beginPath();
+      ctx.arc(travelerX, travelerY - 26, 6, 0, Math.PI * 2); // Head
+      ctx.fill();
+      ctx.fillRect(travelerX - 5, travelerY - 20, 10, 20);   // Body
+      ctx.fillRect(travelerX - 4, travelerY, 3.5, 12);       // Leg 1
+      ctx.fillRect(travelerX + 1, travelerY, 3.5, 12);       // Leg 2
+
+      ctx.restore();
+    }
+
+    // =========================================================================
+    // 11.8. OLD SCHOOL & BEST FRIEND WAITING OUTSIDE (If present)
+    // =========================================================================
+    if (hasSchool) {
+      ctx.save();
+      const schoolBaseY = horizonY;
+
+      // School Building Wing (Left / Mid background)
+      const bldgGrad = ctx.createLinearGradient(0, schoolBaseY - 200, width * 0.55, schoolBaseY);
+      bldgGrad.addColorStop(0, '#1e1b4b');
+      bldgGrad.addColorStop(1, '#0f172a');
+      ctx.fillStyle = bldgGrad;
+      ctx.fillRect(width * 0.05, schoolBaseY - 180, width * 0.5, 180);
+
+      // School Roof line & Clock Tower / Arch
+      ctx.fillStyle = '#312e81';
+      ctx.beginPath();
+      ctx.moveTo(width * 0.05, schoolBaseY - 180);
+      ctx.lineTo(width * 0.3, schoolBaseY - 230);
+      ctx.lineTo(width * 0.55, schoolBaseY - 180);
+      ctx.closePath();
+      ctx.fill();
+
+      // Lit Classroom Windows (Searching for classroom feel)
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 4; col++) {
+          const wx = width * 0.09 + col * 75;
+          const wy = schoolBaseY - 150 + row * 65;
+          const isSelectedWin = row === 0 && col === 2;
+
+          ctx.fillStyle = isSelectedWin ? 'rgba(56, 189, 248, 0.85)' : 'rgba(254, 240, 138, 0.4)';
+          ctx.fillRect(wx, wy, 45, 40);
+          ctx.strokeStyle = '#0f172a';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(wx, wy, 45, 40);
+        }
+      }
+
+      // Exterior Exit Doorway / Gate with Warm Light
+      const exitX = width * 0.72;
+      const exitY = schoolBaseY - 20;
+
+      const doorGlow = ctx.createRadialGradient(exitX, exitY - 50, 5, exitX, exitY - 50, 130);
+      doorGlow.addColorStop(0, 'rgba(254, 240, 138, 0.7)');
+      doorGlow.addColorStop(0.4, 'rgba(251, 191, 36, 0.3)');
+      doorGlow.addColorStop(1, 'transparent');
+      ctx.fillStyle = doorGlow;
+      ctx.beginPath();
+      ctx.arc(exitX, exitY - 50, 130, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Stone Pillar / Door Arch outside
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(exitX - 50, exitY - 130, 20, 130);
+      ctx.fillRect(exitX + 30, exitY - 130, 20, 130);
+      ctx.beginPath();
+      ctx.arc(exitX, exitY - 130, 45, Math.PI, 0);
+      ctx.fill();
+
+      // Best Friend Silhouette Waiting Outside with Warm Wave / Stance
+      if (hasFriend || true) {
+        const friendX = exitX;
+        const friendY = exitY - 10;
+
+        ctx.fillStyle = '#0f172a';
+        // Head
+        ctx.beginPath();
+        ctx.arc(friendX, friendY - 34, 7, 0, Math.PI * 2);
+        ctx.fill();
+        // Body
+        ctx.fillRect(friendX - 6, friendY - 27, 12, 24);
+        // Raised waving arm (welcoming / comforting)
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 3.5;
+        ctx.beginPath();
+        ctx.moveTo(friendX + 6, friendY - 20);
+        ctx.lineTo(friendX + 18, friendY - 32);
+        ctx.lineTo(friendX + 22, friendY - 42);
+        ctx.stroke();
+        // Legs
+        ctx.fillRect(friendX - 5, friendY - 3, 4, 15);
+        ctx.fillRect(friendX + 1, friendY - 3, 4, 15);
+      }
+
       ctx.restore();
     }
 

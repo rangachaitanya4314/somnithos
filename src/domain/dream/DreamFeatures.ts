@@ -35,6 +35,12 @@ export interface DreamFeatures {
   // Recurring patterns
   possibleRecurringPatterns?: string[];
 
+  // Meaningful narrative observations (Redesigned 3-5 highlights)
+  meaningfulHighlights?: { emoji: string; text: string }[];
+  meaningfulDetails?: string[];
+  emotionalJourney?: string;
+  simpleReflection?: string;
+
   // Explicit explanations for feature detection ("Why did Somnithos notice this?")
   motifsWhyNoticed: Record<string, string>;
 

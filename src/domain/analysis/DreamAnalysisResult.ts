@@ -61,6 +61,15 @@ export interface DreamAnalysisResult {
   // 11. Discrete Verified Claims with Provenance Chains
   claims?: import('../evidence/ClaimRecord').ClaimRecord[];
 
-  // 12. Epistemic Provenance Notes
+  // 12. Redesigned Simple Reflection & Astrology
+  simpleReflection?: string;
+  astrologyReading?: {
+    element?: string;
+    planetaryTheme?: string;
+    reading: string;
+    disclaimer: string;
+  };
+
+  // 13. Epistemic Provenance Notes
   methodologyNotes: string;
 }
